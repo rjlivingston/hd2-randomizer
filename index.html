@@ -339,7 +339,7 @@ function buildPod(podId) {
         <div class="weapon-category-title" style="margin:0;border:none;padding:0;">${c.label}</div>
         <button class="select-all-btn" onclick="toggleAllSsItems(${podId},'${c.key}',this)">All</button>
       </div>
-      <div class="weapon-list" style="max-height:160px;">${items}</div>
+      <div class="weapon-list" style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;">${items}</div>
     </div>`;
   }).join('');
 
