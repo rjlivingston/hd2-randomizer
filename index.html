@@ -10,7 +10,7 @@
   :root {
     --bg: #1e2a3a; --bg2: #26354a; --bg3: #2e3f58;
     --border: #3a5070; --border2: #4a6890;
-    --gold: #c8922a; --gold2: #e8b050;
+    --gold: #e8e030; --gold2: #f0f060;
     --text: #e8f0f8; --text2: #a0b8d0;
     --accent: #4a7fc0; --accent2: #6a9fd8;
     --success: #3a9060; --tab-active: #2e4870;
@@ -18,7 +18,7 @@
   }
   body { background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 16px; min-height: 100vh; }
   .header { text-align: center; padding: 2rem 1rem 1rem; border-bottom: 1px solid var(--border); }
-  .header h1 { font-size: 2rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold2); text-shadow: 0 0 20px rgba(200,146,42,0.4); }
+  .header h1 { font-size: 2rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold2); text-shadow: 0 0 20px rgba(232,224,48,0.4); }
   .header .subtitle { font-size: 0.85rem; letter-spacing: 0.3em; color: var(--text2); text-transform: uppercase; margin-top: 0.25rem; }
   .main { padding: 1.5rem 1rem; max-width: 1400px; margin: 0 auto; }
   .party-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
@@ -97,9 +97,12 @@
 
   .loadout-result { border-top: 1px solid var(--border); min-height: 180px; padding: 0.75rem; background: var(--bg); font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; color: var(--text2); }
   .loadout-result.has-result { display: block; }
-  .result-section { margin-bottom: 0.6rem; }
+  .result-section { margin-bottom: 0.6rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 0.4rem; }
+  .result-section-content { flex: 1; min-width: 0; }
   .result-label { font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text2); margin-bottom: 0.2rem; }
   .result-value { color: var(--gold2); font-size: 0.7rem; line-height: 1.4; }
+  .reroll-btn { font-size: 0.65rem; background: transparent; border: 1px solid var(--border2); color: var(--text2); cursor: pointer; padding: 0.1rem 0.3rem; flex-shrink: 0; line-height: 1; margin-top: 0.1rem; transition: all 0.15s; }
+  .reroll-btn:hover { border-color: var(--gold); color: var(--gold); }
   .result-strat { color: var(--accent2); display: block; }
   .question-mark { font-size: 3rem; color: var(--border2); text-align: center; width: 100%; }
 
@@ -110,12 +113,13 @@
   .pod-randomize-btn { font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.2rem 0.6rem; background: transparent; border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.15s; }
   .pod-randomize-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-  .sync-bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; background: var(--bg2); border-bottom: 1px solid var(--border); font-size: 0.72rem; font-family: 'Rajdhani', sans-serif; flex-wrap: wrap; }
+  .sync-bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; margin-bottom: 1rem; font-size: 0.72rem; font-family: 'Rajdhani', sans-serif; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
   .sync-status { display: flex; align-items: center; gap: 0.4rem; }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); flex-shrink: 0; transition: background 0.3s; }
   .sync-dot.connected { background: var(--success); }
   .sync-dot.syncing { background: var(--gold); }
   .sync-label { color: var(--text2); letter-spacing: 0.05em; }
+  .footer { text-align:center; padding: 1.5rem 2rem; color: var(--text2); font-size: 0.75rem; letter-spacing: 0.1em; border-top: 1px solid var(--border); margin-top: 2rem; }
   .room-input { background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 0.72rem; padding: 0.25rem 0.5rem; width: 160px; letter-spacing: 0.05em; }
   .room-input:focus { outline: none; border-color: var(--accent); }
   .sync-btn { font-family: 'Rajdhani', sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.25rem 0.75rem; background: transparent; border: 1px solid var(--border2); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
@@ -129,27 +133,21 @@
   <h1>Helldivers 2 Loadout Randomizer</h1>
   <div class="subtitle">Mission Planning Console &mdash; Party Edition</div>
 </div>
-<div class="sync-bar" id="sync-bar">
-  <div class="sync-status">
-    <div class="sync-dot" id="sync-dot"></div>
-    <span class="sync-label" id="sync-label">Not connected</span>
-  </div>
-  <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" />
-  <button class="sync-btn" id="sync-btn" onclick="joinRoom()">Join Room</button>
-  <span class="room-code-display" id="room-display"></span>
-</div>
 <div class="main">
+  <div class="sync-bar" id="sync-bar">
+    <div class="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span class="sync-label" id="sync-label">Not connected</span>
+    </div>
+    <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" />
+    <button class="sync-btn" id="sync-btn" onclick="joinRoom()">Join Room</button>
+    <span class="room-code-display" id="room-display"></span>
+  </div>
   <div class="party-grid" id="party-grid"></div>
   <div class="party-controls">
     <button class="big-randomize-btn" onclick="randomizeAll()">&#9654; Randomize All Hellpods</button>
   </div>
 </div>
-<div class="footer">
-  Helldivers 2 &mdash; Super Earth Armed Forces &mdash; Data current as of Exo Experts update
-  <br><br>
-  <button onclick="downloadApp()" style="font-family:'Rajdhani',sans-serif;font-size:0.75rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:0.4rem 1.2rem;background:transparent;border:1px solid var(--border2);color:var(--text2);cursor:pointer;margin-top:0.5rem;">&#8659; Download App</button>
-</div>
-
 <script>
 function downloadApp() {
   const html = document.documentElement.outerHTML;
@@ -164,47 +162,48 @@ function downloadApp() {
 
 <script>
 const DATA = {
-  primary: ["AR-2 Coyote","AR-23 Liberator","AR-23A Liberator Carbine","AR-23C Liberator Concussive","AR-23P Liberator Penetrator","AR-32 Pacifier","AR-59 Suppressor","AR-61 Tenderizer","AR/GL-21 One-Two","ARC-12 Blitzer","BR-14 Adjudicator","CB-9 Exploding Crossbow","DBS-2 Double Freedom","FLAM-66 Torcher","JAR-5 Dominator","LAS-16 Sickle","LAS-16 Trident","LAS-17 Double-Edge Sickle","LAS-5 Scythe","M7S SMG","M90A Shotgun","MA5C Assault Rifle","MP-98 Knight","PLAS-1 Scorcher","PLAS-101 Purifier","PLAS-39 Accelerator Rifle","PLAS-45 Epoch","R-2 Amendment","R-2124 Constitution","R-36 Eruptor","R-6 Deadeye","R-63 Diligence","R-63CS Diligence Counter Sniper","R-72 Censor","SG-20 Halt","SG-225 Breaker","SG-225IE Breaker Incendiary","SG-225SP Breaker Spray & Pray","SG-451 Cookout","SG-8 Punisher","SG-8P Punisher Plasma","SG-8S Slugger","SG-97 Sweeper","SMG-203 Gallant","SMG-32 Reprimand","SMG-37 Defender","SMG-72 Pummeler","SMG/FLAM-34 Stroker","StA-11 SMG","StA-52 Assault Rifle","VG-70 Variable"],
-  secondary: ["GP-31 Grenade Pistol","M6C/SOCOM Pistol","P-11 Stim Pistol","P-113 Verdict","P-19 Redeemer","P-2 Peacemaker","P-35 Re-Educator","P-4 Senator","P-72 Crisper","P-8 Talon","P-92 Warrant","P-96 Heating Up","SG-22 Bushwhacker","StA-3 WAR Dog","CQC-5 Combat Hatchet","CQC-9 Defoliation Tool","CQC-20 Breaching Hammer","CQC-42 Machete","Stun Baton","TED-63 Dynamite"],
-  throwable: ["G-10 Incendiary","G-109 Urchin","G-12 High Explosive","G-123 Thermite","G-13 Incendiary Impact","G-142 Pyrotech","G-16 Impact","G-23 Stun","G-31 Arc","G-3 Smoke","G-4 Gas","G-48 Giga Grenade","G-50 Seeker","G-6 Frag","G-7 Pineapple","G-9 Shredder","G/SH-39 Shield","K-2 Throwing Knife","TM-1 Lure Mine"],
-  armor: ["A-35 Recon","A-9 Helljumper","AC-1 Dutiful","AC-2 Obedient","AF-02 Haz-Master","AF-50 Noxious Ranger","BP-20 Correct Officer","BP-32 Jackboot","CE-07 Demolition Specialist","CE-27 Ground Breaker","CE-35 Trench Engineer","CE-74 Breacher","CM-09 Bonesnapper","CM-21 Trench Paramedic","CPG-48 Sapper","CPH-26 Commandant","CW-22 Kodiak","CW-36 Winter Warrior","CW-4 Arctic Ranger","DP-11 Champion of the People","DP-40 Hero of the Federation","DS-191 Scorpion","DS-42 Federation's Blade","EX-00 Prototype X","EX-03 Prototype Z","EX-16 Prototype V","FS-05 Marksman","FS-11 Executioner","FS-23 Battle Master","FS-34 Devastator","FS-37 Ravager","FS-55 Devastator","GS-17 Frontier Marshal","GS-66 Lawmaker","I-09 Heatseeker","I-09 Predator","I-102 Draconaught","IE-12 Righteous","IE-3 Martyr","O-2 Heavy Operator","O-3 Free Spirit","PH-202 Twigsnapper","PH-9 Predator","RE-1861 Parade Commander","RE-2310 Honorary Guard","RS-20 Constrictor","RS-40 Beast of Prey","RS-67 Null Cipher","RS-89 Shadow Paragon","SA-04 Combat Technician","SA-07 Headfirst","SA-08 Ram","SA-12 Servo Assisted","SA-25 Steel Trooper","SA-32 Dynamo","SC-15 Drone Master","SC-30 Trailblazer Scout","SC-34 Infiltrator","SR-18 Roadblock","SR-24 Street Scout","TR-117 Alpha Commander","TR-7 Ambassador of the Brand","TR-9 Cavalier of Democracy","UF-16 Inspector","UF-50 Bloodhound"],
+  primary: ["AR-2 Coyote","AR-23 Liberator","AR-23A Liberator Carbine","AR-23C Liberator Concussive","AR-23P Liberator Penetrator","AR-32 Pacifier","AR-59 Suppressor","AR-61 Tenderizer","AR/GL-21 One-Two","ARC-12 Blitzer","BR-14 Adjudicator","CB-9 Exploding Crossbow","FLAM-66 Torcher","JAR-5 Dominator","LAS-16 Sickle","LAS-16 Trident","LAS-17 Double-Edge Sickle","LAS-5 Scythe","M7S SMG","M90A Shotgun","MA5C Assault Rifle","MP-98 Knight","PLAS-1 Scorcher","PLAS-101 Purifier","PLAS-39 Accelerator Rifle","PLAS-45 Epoch","R-2 Amendment","R-2124 Constitution","R-36 Eruptor","R-6 Deadeye","R-63 Diligence","R-63CS Diligence Counter Sniper","R-72 Censor","SG-20 Halt","SG-225 Breaker","SG-225IE Breaker Incendiary","SG-225SP Breaker Spray & Pray","SG-451 Cookout","SG-8 Punisher","SG-8P Punisher Plasma","SG-8S Slugger","SMG-203 Gallant","SMG-32 Reprimand","SMG-37 Defender","SMG-72 Pummeler","SMG/FLAM-34 Stoker","StA-11 SMG","StA-52 Assault Rifle","VG-70 Variable"],
+  secondary: ["GP-31 Grenade Pistol","M6C/SOCOM Pistol","P-11 Stim Pistol","P-113 Verdict","P-19 Redeemer","P-2 Peacemaker","P-35 Re-Educator","P-4 Senator","P-72 Crisper","SG-22 Bushwhacker","CQC-9 Defoliation Tool","CQC-20 Breaching Hammer","TED-63 Dynamite"],
+  throwable: ["G-10 Incendiary","G-109 Urchin","G-12 High Explosive","G-123 Thermite","G-13 Incendiary Impact","G-142 Pyrotech","G-16 Impact","G-23 Stun","G-31 Arc","G-3 Smoke","G-4 Gas","G-48 Giga Grenade","G-50 Seeker","G-6 Frag","G-7 Pineapple","G/SH-39 Shield","K-2 Throwing Knife","TM-1 Lure Mine"],
+  armor: ["A-35 Recon","A-9 Helljumper","AC-1 Dutiful","AC-2 Obedient","AF-02 Haz-Master","AF-50 Noxious Ranger","BP-20 Correct Officer","BP-32 Jackboot","CE-07 Demolition Specialist","CE-27 Ground Breaker","CE-35 Trench Engineer","CM-09 Bonesnapper","CPG-48 Sapper","CPH-26 Commandant","CW-22 Kodiak","CW-36 Winter Warrior","CW-4 Arctic Ranger","DP-11 Champion of the People","DP-40 Hero of the Federation","DS-191 Scorpion","DS-42 Federation's Blade","EX-00 Prototype X","EX-03 Prototype 3","EX-16 Prototype 16","FS-05 Marksman","FS-23 Battle Master","FS-55 Devastator","GS-17 Frontier Marshal","GS-66 Lawmaker","I-102 Draconaught","IE-12 Righteous","IE-3 Martyr","O-2 Heavy Operator","O-3 Free Spirit","PH-202 Twigsnapper","PH-9 Predator","RE-1861 Parade Commander","RE-2310 Honorary Guard","RS-20 Constrictor","RS-40 Beast of Prey","RS-67 Null Cipher","RS-89 Shadow Paragon","SA-04 Combat Technician","SA-07 Headfirst","SA-08 Ram","SA-12 Servo Assisted","SA-25 Steel Trooper","SA-32 Dynamo","SC-30 Trailblazer Scout","SC-34 Infiltrator","SR-18 Roadblock","SR-24 Street Scout","UF-16 Inspector","UF-50 Bloodhound"],
   offensive: ["Orbital Gatling Barrage","Orbital Airburst Strike","Orbital 120MM HE Barrage","Orbital 380MM HE Barrage","Orbital Walking Barrage","Orbital Laser","Orbital Railcannon Strike","Orbital Precision Strike","Orbital Gas Strike","Orbital EMS Strike","Orbital Smoke Strike","Orbital Napalm Barrage","Eagle 500kg Bomb","Eagle Airstrike","Eagle Cluster Bomb","Eagle Napalm Airstrike","Eagle Strafing Run","Eagle 110mm Rocket Pods","Eagle Smoke Strike"],
-  defensive: ["A/ARC-3 Tesla Tower","A/MG-43 Machine Gun Sentry","A/M-12 Mortar Sentry","A/M-23 EMS Mortar Sentry","A/AC-8 Autocannon Sentry","A/MLS-4X Rocket Sentry","A/G-16 Gatling Sentry","A/FLAM-40 Flame Sentry","A/GM-17 Gas Mortar Sentry","A/LAS-98 Laser Sentry","MD-6 Anti-Personnel Minefield","MD-I4 Incendiary Mines","MD-17 Anti-Tank Mines","MD-8 Gas Mines","E/AT-12 Anti-Tank Emplacement","E/MG-101 HMG Emplacement","E/GL-21 Grenadier Battlement","FX-12 Shield Generator Relay","Armed Resupply Pods","Stun Pods","Reinforcement Pods"],
-  support: ["MG-43 Machine Gun","APW-1 Anti-Materiel Rifle","M-105 Stalwart","EAT-17 Expendable Anti-Tank","EAT-411 Leveller","EAT-700 Expendable Napalm","GR-8 Recoilless Rifle","FLAM-40 Flamethrower","AC-8 Autocannon","RS-422 Railgun","FAF-14 Spear","GL-21 Grenade Launcher","GL-28 Belt-Fed Grenade Launcher","GL-52 De-Escalator","LAS-98 Laser Cannon","LAS-99 Quasar Cannon","ARC-3 Arc Thrower","RL-77 Airburst Rocket Launcher","MG-206 Heavy Machine Gun","MS-11 Solo Silo","M-1000 Maxigun","MGX-42 Bullet Storm","MLS-4X Commando","S-11 Speargun","TX-41 Sterilizer","B/FLAM-80 Cremator","B/MD C4 Pack"],
+  defensive: ["A/ARC-3 Tesla Tower","A/MG-43 Machine Gun Sentry","A/M-12 Mortar Sentry","A/M-23 EMS Mortar Sentry","A/AC-8 Autocannon Sentry","A/MLS-4X Rocket Sentry","A/G-16 Gatling Sentry","A/FLAM-40 Flame Sentry","A/GM-17 Gas Mortar Sentry","A/LAS-98 Laser Sentry","MD-6 Anti-Personnel Minefield","MD-I4 Incendiary Mines","MD-17 Anti-Tank Mines","MD-8 Gas Mines","E/AT-12 Anti-Tank Emplacement","E/MG-101 HMG Emplacement","E/GL-21 Grenadier Battlement","FX-12 Shield Generator Relay","Reinforcement Pods"],
+  support: ["MG-43 Machine Gun","APW-1 Anti-Materiel Rifle","M-105 Stalwart","EAT-17 Expendable Anti-Tank","EAT-411 Leveller","EAT-700 Expendable Napalm","GR-8 Recoilless Rifle","FLAM-40 Flamethrower","AC-8 Autocannon","RS-422 Railgun","FAF-14 Spear","GL-21 Grenade Launcher","GL-28 Belt-Fed Grenade Launcher","GL-52 De-Escalator","LAS-98 Laser Cannon","LAS-99 Quasar Cannon","ARC-3 Arc Thrower","RL-77 Airburst Rocket Launcher","MG-206 Heavy Machine Gun","MS-11 Solo Silo","M-1000 Maxigun","MGX-42 Bullet Storm","MLS-4X Commando","S-11 Speargun","TX-41 Sterilizer","B/FLAM-80 Cremator","B/MD C4 Pack","StA-X3 W.A.S.P. Launcher"],
   vehicle: ["EXO-45 Patriot Exosuit","EXO-49 Emancipator Exosuit","EXO-51 Lumberer Exosuit","EXO-55 Breakthrough Exosuit","M-103 Supply FRV","M-104 Incinerator FRV","M-102 Fast Recon Vehicle","TD-220 Bastion MK XVI"],
-  backpack: ["B-1 Supply Pack","B-100 Portable Hellbomb","LIFT-850 Jump Pack","LIFT-860 Hover Pack","LIFT-182 Warp Pack","SH-20 Ballistic Shield Backpack","SH-32 Shield Generator Pack","SH-51 Directional Shield","AX/AR-23 Guard Dog","AX/LAS-5 Guard Dog Rover","AX/ARC-3 K-9","AX/FLAM-75 Hot Dog","AX/TX-13 Dog Breath"],
-  booster: ["Vitality Enhancement","UAV Recon Booster","Stamina Enhancement","Muscle Enhancement","Hellpod Space Optimization","Experimental Infusion","Localization Confusion","Motivational Shocks","Expert Extraction Pilot","Flexible Reinforcement Budget","Reduced Reinforcement Stratagem Cooldown","Firebomb Hellpods","Dead Sprint","Concealed Insertion"]
+  backpack: ["B-1 Supply Pack","B-100 Portable Hellbomb","LIFT-850 Jump Pack","LIFT-860 Hover Pack","LIFT-182 Warp Pack","SH-20 Ballistic Shield Backpack","SH-32 Shield Generator Pack","SH-51 Directional Shield","AX/AR-23 Guard Dog","AX/LAS-5 Rover","AX/ARC-3 K-9","AX/FLAM-75 Hot Dog","AX/TX-13 Dog Breath"],
+  booster: ["Vitality Enhancement","UAV Recon Booster","Stamina Enhancement","Muscle Enhancement","Hellpod Space Optimization","Experimental Infusion","Localization Confusion","Motivational Shocks","Expert Extraction Pilot","Flexible Reinforcement Budget","Increased Reinforcement Budget","Firebomb Hellpods","Dead Sprint","Concealed Insertion","Armed Resupply Pods","Sample Extricator","Sample Scanner","Stun Pods"]
 };
 
 const WARBONDS = [
-  {id:"HM",  name:"Helldivers Mobilize",         color:"#4a7fc0"},
-  {id:"SV",  name:"Steeled Veterans",            color:"#607040"},
+  {id:"BJ",  name:"Borderline Justice",          color:"#604020"},
+  {id:"CA",  name:"Chemical Agents",             color:"#507020"},
+  {id:"CG",  name:"Control Group",               color:"#306040"},
   {id:"CE",  name:"Cutting Edge",                color:"#208090"},
   {id:"DD",  name:"Democratic Detonation",       color:"#904020"},
-  {id:"PP",  name:"Polar Patriots",              color:"#305080"},
-  {id:"VC",  name:"Viper Commandos",             color:"#406030"},
-  {id:"FF",  name:"Freedoms Flame",              color:"#a04020"},
-  {id:"CA",  name:"Chemical Agents",             color:"#507020"},
-  {id:"TE",  name:"Truth Enforcers",             color:"#204070"},
-  {id:"UL",  name:"Urban Legends",               color:"#504040"},
-  {id:"SoF", name:"Servants of Freedom",         color:"#604030"},
-  {id:"BJ",  name:"Borderline Justice",          color:"#604020"},
-  {id:"MoC", name:"Masters of Ceremony",         color:"#503060"},
-  {id:"FoL", name:"Force of Law",                color:"#304060"},
-  {id:"CG",  name:"Control Group",               color:"#306040"},
   {id:"DD2", name:"Dust Devils",                 color:"#702020"},
-  {id:"PC",  name:"Python Commandos",            color:"#403060"},
-  {id:"RR",  name:"Redacted Regiment",           color:"#304020"},
-  {id:"SB",  name:"Siege Breakers",              color:"#203050"},
   {id:"ED",  name:"Entrenched Division",         color:"#502020"},
   {id:"EXO", name:"Exo Experts",                 color:"#604010"},
+  {id:"FF",  name:"Freedoms Flame",              color:"#a04020"},
+  {id:"FoL", name:"Force of Law",                color:"#304060"},
+  {id:"HM",  name:"Helldivers Mobilize",         color:"#4a7fc0"},
+  {id:"MoC", name:"Masters of Ceremony",         color:"#503060"},
   {id:"HALO",name:"ODST (Halo)",                 color:"#204050"},
-  {id:"KZ",  name:"Righteous Revenants (KZ)",    color:"#302020"}
+  {id:"PP",  name:"Polar Patriots",              color:"#305080"},
+  {id:"PC",  name:"Python Commandos",            color:"#403060"},
+  {id:"RR",  name:"Redacted Regiment",           color:"#304020"},
+  {id:"KZ",  name:"Righteous Revenants (KZ)",    color:"#302020"},
+  {id:"SoF", name:"Servants of Freedom",         color:"#604030"},
+  {id:"SB",  name:"Siege Breakers",              color:"#203050"},
+  {id:"SV",  name:"Steeled Veterans",            color:"#607040"},
+  {id:"TE",  name:"Truth Enforcers",             color:"#204070"},
+  {id:"UL",  name:"Urban Legends",               color:"#504040"},
+  {id:"VC",  name:"Viper Commandos",             color:"#406030"}
 ];
 
 const SUPERSTORE = {
-  weapons: ["P-92 Warrant","Stun Baton","CQC-5 Combat Hatchet","CQC-42 Machete"],
-  armor: ["SC-37 Legionnaire","SC-15 Drone Master","B-24 Enforcer","CE-74 Breacher","B-27 Fortified Commando","FS-38 Eradicator","B-08 Light Gunner","FS-61 Dreadnought","FS-11 Executioner","CM-21 Trench Paramedic","CE-81 Juggernaut","FS-34 Exterminator","CM-17 Butcher","CE-67 Titan","CM-10 Clinician","FS-37 Ravager","CW-9 White Wolf","CE-64 Grenadier","PH-56 Jaguar","CE-101 Guerilla Gorilla","I-44 Salamander","I-92 Fire Fighter","AF-52 Lockdown","AF-91 Field Chemist","UF-84 Doubt Killer","SR-64 Cinderblock","IE-57 Hell-Bent","GS-11 Democracy Deputy","RE-824 Bearer of the Standard","BP-77 Grand Juror","AD-11 Livewire","DS-10 Big Game Hunter","RS-6 Fiend Destroyer"]
+  weapons: ["DBS-2 Double Freedom","SG-97 Sweeper","P-92 Warrant","Stun Baton","CQC-5 Combat Hatchet","CQC-42 Machete"],
+  armor: ["SC-15 Drone Master","CE-74 Breaker","FS-11 Executioner","CM-21 Trench Paramedic","FS-37 Ravager","FS-34 Exterminator","I-09 Heatseeker","SC-37 Legionnaire","B-24 Enforcer","B-27 Fortified Commando","FS-38 Eradicator","B-08 Light Gunner","FS-61 Dreadnought","CE-81 Juggernaut","CM-17 Butcher","CE-67 Titan","CM-10 Clinician","CW-9 White Wolf","CE-64 Grenadier","PH-56 Jaguar","CE-101 Guerilla Gorilla","I-44 Salamander","I-92 Fire Fighter","AF-52 Lockdown","AF-91 Field Chemist","UF-84 Doubt Killer","SR-64 Cinderblock","IE-57 Hell-Bent","GS-11 Democracy Deputy","RE-824 Bearer of the Standard","BP-77 Grand Juror","AD-11 Livewire","DS-10 Big Game Hunter","RS-6 Fiend Destroyer"],
+  bonus: ["TR-9 Cavalier of Democracy","TR-7 Ambassador of the Brand","TR-117 Alpha Commander"]
 };
 
 const LOADOUT_CATS = ["Primary","Secondary","Throwable","Armor","Offensive","Defensive","Support","Backpack","Booster"];
@@ -219,29 +218,29 @@ const VEHICLE_ITEMS = {
 // Maps each warbond id to the weapon names it contains (primaries, secondaries, throwables only)
 // Verified directly from helldivers.wiki.gg - all loadout-relevant items per warbond
 const WARBOND_ITEMS = {
-  HM:  ["SG-8 Punisher","G-6 Frag","SC-34 Infiltrator","R-63 Diligence","P-19 Redeemer","FS-05 Marksman","SMG-37 Defender","CE-35 Trench Engineer","SG-225 Breaker","CM-09 Bonesnapper","LAS-5 Scythe","G-16 Impact","DP-40 Hero of the Federation","AR-23P Liberator Penetrator","FS-23 Battle Master","R-63CS Diligence Counter Sniper","SC-30 Trailblazer Scout","SG-8S Slugger","G-3 Smoke","SA-04 Combat Technician","SG-225SP Breaker Spray & Pray","CM-14 Physician","PLAS-1 Scorcher","DP-11 Champion of the People"],
-  SV:  ["AR-23C Liberator Concussive","P-4 Senator","SA-25 Steel Trooper","SG-225IE Breaker Incendiary","G-10 Incendiary","SA-12 Servo Assisted","JAR-5 Dominator","SA-32 Dynamo"],
-  CE:  ["LAS-16 Sickle","EX-03 Prototype 3","SG-8P Punisher Plasma","G-23 Stun","EX-16 Prototype 16","ARC-12 Blitzer","EX-00 Prototype X"],
-  DD:  ["BR-14 Adjudicator","G-123 Thermite","CE-27 Ground Breaker","R-36 Eruptor","CE-07 Demolition Specialist","CB-9 Exploding Crossbow","GP-31 Grenade Pistol","FS-55 Devastator"],
-  PP:  ["AR-61 Tenderizer","CW-36 Winter Warrior","SMG-72 Pummeler","G-13 Incendiary Impact","CW-22 Kodiak","PLAS-101 Purifier","P-113 Verdict","CW-4 Arctic Ranger"],
-  VC:  ["AR-23A Liberator Carbine","PH-9 Predator","PH-202 Twigsnapper","K-2 Throwing Knife"],
-  FF:  ["SG-451 Cookout","I-09 Heatseeker","FLAM-66 Torcher","I-102 Draconaught","P-72 Crisper"],
-  CA:  ["G-4 Gas","AF-50 Noxious Ranger","P-11 Stim Pistol","AF-02 Haz-Master"],
-  TE:  ["SG-20 Halt","SMG-32 Reprimand","UF-50 Bloodhound","UF-16 Inspector"],
-  UL:  ["SR-24 Street Scout","LAS-16 Trident","LAS-17 Double-Edge Sickle","SR-18 Roadblock"],
-  SoF: ["LAS-17 Double-Edge Sickle","IE-3 Martyr","IE-12 Righteous","G-50 Seeker"],
-  BJ:  ["R-6 Deadeye","GS-17 Frontier Marshal","GS-66 Lawmaker","TED-63 Dynamite"],
+  HM:  ["SG-8 Punisher","G-6 Frag","SC-34 Infiltrator","R-63 Diligence","P-19 Redeemer","FS-05 Marksman","SMG-37 Defender","CE-35 Trench Engineer","SG-225 Breaker","CM-09 Bonesnapper","LAS-5 Scythe","G-16 Impact","DP-40 Hero of the Federation","AR-23P Liberator Penetrator","FS-23 Battle Master","R-63CS Diligence Counter Sniper","SC-30 Trailblazer Scout","SG-8S Slugger","G-3 Smoke","SA-04 Combat Technician","SG-225SP Breaker Spray & Pray","CM-14 Physician","PLAS-1 Scorcher","DP-11 Champion of the People","Vitality Enhancement","UAV Recon Booster","Stamina Enhancement","Muscle Enhancement","Increased Reinforcement Budget"],
+  SV:  ["AR-23C Liberator Concussive","P-4 Senator","SA-25 Steel Trooper","SG-225IE Breaker Incendiary","G-10 Incendiary","SA-12 Servo Assisted","JAR-5 Dominator","SA-32 Dynamo","Flexible Reinforcement Budget"],
+  CE:  ["LAS-16 Sickle","EX-03 Prototype 3","SG-8P Punisher Plasma","G-23 Stun","EX-16 Prototype 16","ARC-12 Blitzer","EX-00 Prototype X","Localization Confusion"],
+  DD:  ["BR-14 Adjudicator","G-123 Thermite","CE-27 Ground Breaker","R-36 Eruptor","CE-07 Demolition Specialist","CB-9 Exploding Crossbow","GP-31 Grenade Pistol","FS-55 Devastator","Expert Extraction Pilot"],
+  PP:  ["AR-61 Tenderizer","CW-36 Winter Warrior","SMG-72 Pummeler","G-13 Incendiary Impact","CW-22 Kodiak","PLAS-101 Purifier","P-113 Verdict","CW-4 Arctic Ranger","Motivational Shocks"],
+  VC:  ["AR-23A Liberator Carbine","SG-22 Bushwhacker","PH-9 Predator","PH-202 Twigsnapper","K-2 Throwing Knife","Experimental Infusion"],
+  FF:  ["SG-451 Cookout","FLAM-66 Torcher","I-102 Draconaught","P-72 Crisper","Firebomb Hellpods"],
+  CA:  ["G-4 Gas","AF-50 Noxious Ranger","P-11 Stim Pistol","AF-02 Haz-Master","TX-41 Sterilizer","AX/TX-13 Dog Breath"],
+  TE:  ["SG-20 Halt","SMG-32 Reprimand","UF-50 Bloodhound","UF-16 Inspector","Dead Sprint"],
+  UL:  ["SR-24 Street Scout","SR-18 Roadblock","CQC-19 Stun Lance","SH-51 Directional Shield","Armed Resupply Pods","A/FLAM-40 Flame Sentry","E/AT-12 Anti-Tank Emplacement"],
+  SoF: ["LAS-17 Double-Edge Sickle","IE-3 Martyr","IE-12 Righteous","G-50 Seeker","GP-20 Ultimatum","B-100 Portable Hellbomb"],
+  BJ:  ["R-6 Deadeye","GS-17 Frontier Marshal","GS-66 Lawmaker","TED-63 Dynamite","LIFT-860 Hover Pack"],
   MoC: ["R-2 Amendment","RE-2310 Honorary Guard","RE-1861 Parade Commander","G-142 Pyrotech"],
-  FoL: ["AR-32 Pacifier","BP-20 Correct Officer","BP-32 Jackboot","G-109 Urchin"],
-  CG:  ["PLAS-45 Epoch","VG-70 Variable","AD-26 Bleeding Edge","AD-49 Apollonian","MP-98 Knight","G-31 Arc"],
+  FoL: ["AR-32 Pacifier","BP-20 Correct Officer","BP-32 Jackboot","G-109 Urchin","Stun Pods","GL-52 De-Escalator","AX/ARC-3 K-9"],
+  CG:  ["PLAS-45 Epoch","VG-70 Variable","AD-26 Bleeding Edge","AD-49 Apollonian","MP-98 Knight","G-31 Arc","A/LAS-98 Laser Sentry","LIFT-182 Warp Pack"],
   DD2: ["AR-2 Coyote","DS-42 Federation's Blade","S-11 Speargun","EAT-700 Expendable Napalm","DS-191 Scorpion","MS-11 Solo Silo","G-7 Pineapple"],
   PC:  ["AR/GL-21 One-Two","RS-20 Constrictor","CQC-9 Defoliation Tool","RS-40 Beast of Prey","M-1000 Maxigun"],
-  RR:  ["R-72 Censor","P-35 Re-Educator","RS-89 Shadow Paragon","AR-59 Suppressor","RS-67 Null Cipher","TM-1 Lure Mine"],
-  SB:  ["LAS-16 Trident","SA-7 Headfirst","CQC-20 Breaching Hammer","EAT-411 Leveller","SA-8 Ram","GL-28 Belt-Fed Grenade Launcher","G/SH-39 Shield"],
-  ED:  ["CPG-48 Sapper","CPH-26 Commandant","G-48 Giga Grenade","SMG/FLAM-34 Stroker","B/FLAM-80 Cremator"],
-  EXO: ["SMG-203 Gallant","MGX-42 Bullet Storm","O-3 Free Spirit","O-2 Heavy Operator"],
+  RR:  ["R-72 Censor","P-35 Re-Educator","RS-89 Shadow Paragon","AR-59 Suppressor","RS-67 Null Cipher","TM-1 Lure Mine","Concealed Insertion"],
+  SB:  ["LAS-16 Trident","SA-07 Headfirst","CQC-20 Breaching Hammer","EAT-411 Leveller","SA-08 Ram","GL-28 Belt-Fed Grenade Launcher","G/SH-39 Shield"],
+  ED:  ["CPG-48 Sapper","CPH-26 Commandant","G-48 Giga Grenade","SMG/FLAM-34 Stoker","B/FLAM-80 Cremator"],
+  EXO: ["SMG-203 Gallant","MGX-42 Bullet Storm","O-3 Free Spirit","O-2 Heavy Operator","EXO-51 Lumberer Exosuit","EXO-55 Breakthrough Exosuit"],
   HALO:["MA5C Assault Rifle","A-9 Helljumper","M7S SMG","A-35 Recon","M90A Shotgun","M6C/SOCOM Pistol"],
-  KZ:  ["AC-1 Dutiful","StA-52 Assault Rifle","PLAS-39 Accelerator Rifle","AC-2 Obedient","StA-11 SMG"]
+  KZ:   ["AC-1 Dutiful","StA-52 Assault Rifle","PLAS-39 Accelerator Rifle","AC-2 Obedient","StA-11 SMG"]
 };
 
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -253,15 +252,18 @@ function randFiltered(arr, checks) {
 function initPodState() {
   const weaponChecks = {};
   Object.keys(DATA).forEach(cat => { weaponChecks[cat] = DATA[cat].map(() => true); });
+  // Vehicles start unchecked — lock all vehicle items by default
+  DATA.vehicle.forEach((_, i) => { weaponChecks.vehicle[i] = false; });
   return {
     disabled: false,
     loadout: Object.fromEntries(LOADOUT_CATS.map(c => [c, true])),
-    vehicles: { exosuits: true, frvs: true, other: true },
+    vehicles: { exosuits: false, frvs: false, other: false },
     weapons: weaponChecks,
     warbonds: Object.fromEntries(WARBONDS.map(w => [w.id, true])),
     superstore: {
-      weapons: SUPERSTORE.weapons.map(() => true),
-      armor: SUPERSTORE.armor.map(() => true)
+      weapons: SUPERSTORE.weapons.map(() => false),
+      armor: SUPERSTORE.armor.map(() => false),
+      bonus: SUPERSTORE.bonus.map(() => false)
     }
   };
 }
@@ -311,7 +313,8 @@ function buildPod(podId) {
 
   const ssCats = [
     {key:'weapons', label:'Weapons'},
-    {key:'armor', label:'Armor'}
+    {key:'armor', label:'Armor'},
+    {key:'bonus', label:'Pre-Order / Bonus'}
   ];
 
   const ssCatBtns = ssCats.map((c, i) =>
@@ -320,7 +323,7 @@ function buildPod(podId) {
 
   const ssCatPanels = ssCats.map((c, i) => {
     const items = SUPERSTORE[c.key].map((item, idx) =>
-      `<label class="weapon-item"><input type="checkbox" checked onchange="toggleSsItem(${podId},'${c.key}',${idx},this)"> ${item}</label>`
+      `<label class="weapon-item"><input type="checkbox" onchange="toggleSsItem(${podId},'${c.key}',${idx},this)"> ${item}</label>`
     ).join('');
     return `<div class="ss-cat-panel${i===0?' active':''}" id="ss-${podId}-${c.key}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
@@ -352,14 +355,17 @@ function buildPod(podId) {
         <button class="pod-tab" onclick="switchTab(${podId},'superstore',this)">Superstore</button>
       </div>
       <div class="pod-panel active" id="panel-${podId}-loadout">
-        <div style="font-size:0.65rem;color:var(--text2);margin-bottom:0.5rem;letter-spacing:0.1em;">Select slots to randomize:</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+          <div style="font-size:0.65rem;color:var(--text2);letter-spacing:0.1em;">Select slots to randomize:</div>
+          <button class="select-all-btn" onclick="toggleAllLoadout(${podId},this)">All</button>
+        </div>
         <div class="loadout-toggles">${loadoutToggles}</div>
         <div class="vehicle-toggles">
           <div class="vehicle-toggle-label">Vehicle Stratagems</div>
           <div class="vehicle-sub-toggles">
-            <label class="toggle-item"><input type="checkbox" checked onchange="toggleVehicle(${podId},'exosuits',this)"> Exosuits</label>
-            <label class="toggle-item"><input type="checkbox" checked onchange="toggleVehicle(${podId},'frvs',this)"> FRVs</label>
-            <label class="toggle-item"><input type="checkbox" checked onchange="toggleVehicle(${podId},'other',this)"> Other</label>
+            <label class="toggle-item"><input type="checkbox" onchange="toggleVehicle(${podId},'exosuits',this)"> Exosuits</label>
+            <label class="toggle-item"><input type="checkbox" onchange="toggleVehicle(${podId},'frvs',this)"> FRVs</label>
+            <label class="toggle-item"><input type="checkbox" onchange="toggleVehicle(${podId},'other',this)"> Other</label>
           </div>
         </div>
       </div>
@@ -409,56 +415,42 @@ function toggleWeaponSection(podId, key) {
 
 function toggleVehicle(podId, subType, cb) {
   podStates[podId].vehicles[subType] = cb.checked;
-  // Lock/unlock corresponding items in the weapons tab
-  const items = VEHICLE_ITEMS[subType] || [];
-  const weaponPanel = document.getElementById('weapon-sections-' + podId);
-  weaponPanel.querySelectorAll('.weapon-item').forEach(item => {
-    const label = item.textContent.trim();
-    if (items.includes(label)) {
-      item.classList.toggle('warbond-locked', !cb.checked);
-      const box = item.querySelector('input');
-      box.disabled = !cb.checked;
-      box.checked = cb.checked;
-      const cat = item.closest('[id^="wl-"]')?.id.split('-').slice(2).join('-');
-      if (cat) {
-        const idx = Array.from(item.parentElement.children).indexOf(item);
-        podStates[podId].weapons[cat][idx] = cb.checked;
-      }
-    }
+  VEHICLE_ITEMS[subType].forEach(itemName => lockItemByName(podId, itemName, !cb.checked));
+  updateTabCounts(podId);
+}
+
+function toggleAllLoadout(podId, btn) {
+  const panel = document.getElementById('panel-' + podId + '-loadout');
+  const boxes = panel.querySelectorAll('.loadout-toggles input[type="checkbox"]');
+  const anyUnchecked = Array.from(boxes).some(b => !b.checked);
+  boxes.forEach(b => {
+    b.checked = anyUnchecked;
+    const cat = b.closest('.toggle-item').textContent.trim();
+    podStates[podId].loadout[cat] = anyUnchecked;
   });
   updateTabCounts(podId);
 }
 
 function toggleLoadout(podId, cat, cb) { podStates[podId].loadout[cat] = cb.checked; updateTabCounts(podId); }
 function toggleWeapon(podId, cat, idx, cb) { podStates[podId].weapons[cat][idx] = cb.checked; updateTabCounts(podId); }
-function toggleAllWarbonds(podId, btn) {
-  const panel = document.getElementById('panel-' + podId + '-warbonds');
-  const btns = panel.querySelectorAll('.warbond-btn');
-  const anyDeselected = Array.from(btns).some(b => !b.classList.contains('selected'));
-  btns.forEach(b => {
-    const wbId = WARBONDS[Array.from(btns).indexOf(b)].id;
-    const nowSelected = anyDeselected;
-    if (podStates[podId].warbonds[wbId] !== nowSelected) {
-      podStates[podId].warbonds[wbId] = nowSelected;
-      b.classList.toggle('selected', nowSelected);
-      const affectedItems = WARBOND_ITEMS[wbId] || [];
-      const weaponPanel = document.getElementById('weapon-sections-' + podId);
-      weaponPanel.querySelectorAll('.weapon-item').forEach(item => {
-        if (affectedItems.includes(item.textContent.trim())) {
-          item.classList.toggle('warbond-locked', !nowSelected);
-          const cb = item.querySelector('input');
-          cb.disabled = !nowSelected;
-          cb.checked = nowSelected;
-          const cat = item.closest('[id^="wl-"]')?.id.split('-').slice(2).join('-');
-          if (cat) {
-            const idx = Array.from(item.parentElement.children).indexOf(item);
-            podStates[podId].weapons[cat][idx] = nowSelected;
-          }
-        }
-      });
+function lockItemByName(podId, itemName, lock) {
+  const weaponPanel = document.getElementById('weapon-sections-' + podId);
+  weaponPanel.querySelectorAll('.weapon-item').forEach(item => {
+    if (item.textContent.trim() !== itemName) return;
+    item.classList.toggle('warbond-locked', lock);
+    const cb = item.querySelector('input');
+    cb.disabled = lock;
+    cb.checked = !lock;
+    // Find which DATA category this item belongs to and its index
+    for (const [cat, arr] of Object.entries(DATA)) {
+      const idx = arr.indexOf(itemName);
+      if (idx !== -1) {
+        podStates[podId].weapons[cat][idx] = !lock;
+        break;
+      }
     }
+    // Also check booster DATA key separately (same as above but belt-and-suspenders)
   });
-  updateTabCounts(podId);
 }
 
 function toggleWarbond(podId, wbId, btn) {
@@ -466,47 +458,43 @@ function toggleWarbond(podId, wbId, btn) {
   podStates[podId].warbonds[wbId] = nowSelected;
   btn.classList.toggle('selected', nowSelected);
 
-  // Lock or unlock items in the weapons panel that belong to this warbond
   const affectedItems = WARBOND_ITEMS[wbId] || [];
-  const weaponPanel = document.getElementById('weapon-sections-' + podId);
-  weaponPanel.querySelectorAll('.weapon-item').forEach(item => {
-    const label = item.textContent.trim();
-    if (affectedItems.includes(label)) {
-      if (nowSelected) {
-        // Re-enable: remove locked state, restore checkbox
-        item.classList.remove('warbond-locked');
-        const cb = item.querySelector('input');
-        cb.disabled = false;
-        // Restore to checked and update state
-        cb.checked = true;
-        const cat = item.closest('[id^="wl-"]')?.id.split('-').slice(2).join('-');
-        if (cat) {
-          const idx = Array.from(item.parentElement.children).indexOf(item);
-          podStates[podId].weapons[cat][idx] = true;
-        }
-      } else {
-        // Lock: gray out and uncheck
-        item.classList.add('warbond-locked');
-        const cb = item.querySelector('input');
-        cb.checked = false;
-        cb.disabled = true;
-        const cat = item.closest('[id^="wl-"]')?.id.split('-').slice(2).join('-');
-        if (cat) {
-          const idx = Array.from(item.parentElement.children).indexOf(item);
-          podStates[podId].weapons[cat][idx] = false;
-        }
-      }
-    }
+  affectedItems.forEach(itemName => lockItemByName(podId, itemName, !nowSelected));
+  updateTabCounts(podId);
+  if (window.syncWarbonds) window.syncWarbonds(podId);
+}
+
+function toggleAllWarbonds(podId, btn) {
+  const panel = document.getElementById('panel-' + podId + '-warbonds');
+  const btns = panel.querySelectorAll('.warbond-btn');
+  const anyDeselected = Array.from(btns).some(b => !b.classList.contains('selected'));
+  const nowSelected = anyDeselected;
+
+  btns.forEach((b, idx) => {
+    podStates[podId].warbonds[WARBONDS[idx].id] = nowSelected;
+    b.classList.toggle('selected', nowSelected);
+  });
+
+  // Lock or unlock every warbond item
+  Object.values(WARBOND_ITEMS).flat().forEach(itemName => {
+    lockItemByName(podId, itemName, !nowSelected);
   });
   updateTabCounts(podId);
+  if (window.syncWarbonds) window.syncWarbonds(podId);
 }
 function toggleSsItem(podId, cat, idx, cb) { podStates[podId].superstore[cat][idx] = cb.checked; }
 
 function toggleAllWeapons(podId, cat, btn) {
   const container = document.getElementById('wl-' + podId + '-' + cat);
   const boxes = container.querySelectorAll('input[type="checkbox"]');
-  const anyUnchecked = Array.from(boxes).some(b => !b.checked);
-  boxes.forEach((b, i) => { b.checked = anyUnchecked; podStates[podId].weapons[cat][i] = anyUnchecked; });
+  const anyUnchecked = Array.from(boxes).some(b => !b.checked && !b.disabled);
+  boxes.forEach(b => {
+    if (b.disabled) return; // don't touch warbond-locked items
+    b.checked = anyUnchecked;
+    const itemName = b.closest('.weapon-item').textContent.trim();
+    const idx = DATA[cat].indexOf(itemName);
+    if (idx !== -1) podStates[podId].weapons[cat][idx] = anyUnchecked;
+  });
   updateTabCounts(podId);
 }
 
@@ -514,7 +502,12 @@ function toggleAllSsItems(podId, cat, btn) {
   const container = document.getElementById('ss-' + podId + '-' + cat);
   const boxes = container.querySelectorAll('input[type="checkbox"]');
   const anyUnchecked = Array.from(boxes).some(b => !b.checked);
-  boxes.forEach((b, i) => { b.checked = anyUnchecked; podStates[podId].superstore[cat][i] = anyUnchecked; });
+  boxes.forEach(b => {
+    b.checked = anyUnchecked;
+    const itemName = b.closest('.weapon-item').textContent.trim();
+    const idx = SUPERSTORE[cat].indexOf(itemName);
+    if (idx !== -1) podStates[podId].superstore[cat][idx] = anyUnchecked;
+  });
 }
 
 function updateTabCounts(podId) {
@@ -551,24 +544,34 @@ function generateLoadout(podId) {
   const w = state.weapons;
   const ss = state.superstore;
 
-  const primaryPool = [...DATA.primary, ...SUPERSTORE.weapons.filter((_, i) => ss.weapons[i])];
-  const armorPool = [...DATA.armor, ...SUPERSTORE.armor.filter((_, i) => ss.armor[i])];
+  // Filter every pool through weapons state so locked/unchecked items are excluded
+  // Deduplicate pools so superstore items that also appear in DATA don't get double weight
+  const enabledPrimary = new Set(DATA.primary.filter((_, i) => w.primary[i] !== false));
+  SUPERSTORE.weapons.forEach((item, i) => { if (ss.weapons[i]) enabledPrimary.add(item); });
+  const primaryPool = [...enabledPrimary];
 
-  // Enabled vehicle items (respects sub-type toggles via weapons state)
+  const secondaryPool = [
+    ...DATA.secondary.filter((_, i) => w.secondary[i] !== false),
+    ...SUPERSTORE.weapons.filter((_, i) => ss.weapons[i])
+  ];
+  const throwablePool = DATA.throwable.filter((_, i) => w.throwable[i] !== false);
+
+  const enabledArmor = new Set(DATA.armor.filter((_, i) => w.armor[i] !== false));
+  SUPERSTORE.armor.forEach((item, i) => { if (ss.armor[i]) enabledArmor.add(item); });
+  SUPERSTORE.bonus.forEach((item, i) => { if (ss.bonus[i]) enabledArmor.add(item); });
+  const armorPool = [...enabledArmor];
   const vehiclePool = DATA.vehicle.filter((_, i) => w.vehicle[i] !== false);
-
-  const result = {};
-  if (l['Primary'])   result.primary   = rand(primaryPool.length ? primaryPool : DATA.primary);
-  if (l['Secondary']) result.secondary = randFiltered(DATA.secondary, w.secondary);
-  if (l['Throwable']) result.throwable = randFiltered(DATA.throwable, w.throwable);
-  if (l['Armor'])     result.armor     = rand(armorPool.length ? armorPool : DATA.armor);
-
-  // Build stratagem pool: merge support + backpack + vehicles into one combined pool,
-  // then pick up to 4 total across offensive, defensive, and the combined pool
   const offensivePool = DATA.offensive.filter((_, i) => w.offensive[i] !== false);
   const defensivePool = DATA.defensive.filter((_, i) => w.defensive[i] !== false);
   const supportPool   = [...DATA.support.filter((_, i) => w.support[i] !== false), ...vehiclePool];
   const backpackPool  = DATA.backpack.filter((_, i) => w.backpack[i] !== false);
+  const boosterPool   = DATA.booster.filter((_, i) => w.booster[i] !== false);
+
+  const result = {};
+  if (l['Primary']   && primaryPool.length)   result.primary   = rand(primaryPool);
+  if (l['Secondary'] && secondaryPool.length)  result.secondary = rand(secondaryPool);
+  if (l['Throwable'] && throwablePool.length)  result.throwable = rand(throwablePool);
+  if (l['Armor']     && armorPool.length)      result.armor     = rand(armorPool);
 
   const strats = [];
   if (l['Offensive'] && offensivePool.length) strats.push(rand(offensivePool));
@@ -577,27 +580,80 @@ function generateLoadout(podId) {
   if (l['Backpack']  && backpackPool.length)   strats.push(rand(backpackPool));
   if (strats.length) result.stratagems = strats;
 
-  if (l['Booster']) result.booster = randFiltered(DATA.booster, w.booster);
+  if (l['Booster'] && boosterPool.length) result.booster = rand(boosterPool);
 
   return result;
 }
 
+// Store last result per pod so individual sections can be re-rolled
+const lastResults = {1: null, 2: null, 3: null, 4: null};
+
 function renderResult(podId, result) {
   const el = document.getElementById('result-' + podId);
-  if (!result) { el.innerHTML = '<div class="question-mark">?</div>'; el.classList.remove('has-result'); return; }
+  if (!result) { el.innerHTML = '<div class="question-mark">?</div>'; el.classList.remove('has-result'); lastResults[podId] = null; return; }
   el.classList.add('has-result');
+  lastResults[podId] = result;
+
+  const rb = (slot) => `<button class="reroll-btn" onclick="rerollSection(${podId},'${slot}')" title="Re-roll">↻</button>`;
+
   let html = '';
-  if (result.primary)   html += `<div class="result-section"><div class="result-label">Primary</div><div class="result-value">${result.primary}</div></div>`;
-  if (result.secondary) html += `<div class="result-section"><div class="result-label">Secondary</div><div class="result-value">${result.secondary}</div></div>`;
-  if (result.throwable) html += `<div class="result-section"><div class="result-label">Throwable</div><div class="result-value">${result.throwable}</div></div>`;
-  if (result.armor)     html += `<div class="result-section"><div class="result-label">Armor</div><div class="result-value">${result.armor}</div></div>`;
+  if (result.primary)   html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Primary</div><div class="result-value">${result.primary}</div></div>${rb('primary')}</div>`;
+  if (result.secondary) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Secondary</div><div class="result-value">${result.secondary}</div></div>${rb('secondary')}</div>`;
+  if (result.throwable) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Throwable</div><div class="result-value">${result.throwable}</div></div>${rb('throwable')}</div>`;
+  if (result.armor)     html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Armor</div><div class="result-value">${result.armor}</div></div>${rb('armor')}</div>`;
   if (result.stratagems && result.stratagems.length) {
-    html += `<div class="result-section"><div class="result-label">Stratagems</div><div class="result-value">`;
+    html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Stratagems</div><div class="result-value">`;
     result.stratagems.forEach(s => { html += `<span class="result-strat">${s}</span>`; });
-    html += `</div></div>`;
+    html += `</div></div>${rb('stratagems')}</div>`;
   }
-  if (result.booster) html += `<div class="result-section"><div class="result-label">Booster</div><div class="result-value">${result.booster}</div></div>`;
+  if (result.booster) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Booster</div><div class="result-value">${result.booster}</div></div>${rb('booster')}</div>`;
   el.innerHTML = html;
+}
+
+function rerollSection(podId, slot) {
+  if (podStates[podId].disabled || !lastResults[podId]) return;
+  const state = podStates[podId];
+  const w = state.weapons;
+  const ss = state.superstore;
+  const result = {...lastResults[podId]};
+
+  if (slot === 'primary') {
+    const enabledPrimary = new Set(DATA.primary.filter((_, i) => w.primary[i] !== false));
+    SUPERSTORE.weapons.forEach((item, i) => { if (ss.weapons[i]) enabledPrimary.add(item); });
+    const pool = [...enabledPrimary];
+    if (pool.length) result.primary = rand(pool);
+  } else if (slot === 'secondary') {
+    const pool = [...DATA.secondary.filter((_, i) => w.secondary[i] !== false), ...SUPERSTORE.weapons.filter((_, i) => ss.weapons[i])];
+    if (pool.length) result.secondary = rand(pool);
+  } else if (slot === 'throwable') {
+    const pool = DATA.throwable.filter((_, i) => w.throwable[i] !== false);
+    if (pool.length) result.throwable = rand(pool);
+  } else if (slot === 'armor') {
+    const enabledArmor = new Set(DATA.armor.filter((_, i) => w.armor[i] !== false));
+    SUPERSTORE.armor.forEach((item, i) => { if (ss.armor[i]) enabledArmor.add(item); });
+    SUPERSTORE.bonus.forEach((item, i) => { if (ss.bonus[i]) enabledArmor.add(item); });
+    const pool = [...enabledArmor];
+    if (pool.length) result.armor = rand(pool);
+  } else if (slot === 'stratagems') {
+    const vehiclePool = DATA.vehicle.filter((_, i) => w.vehicle[i] !== false);
+    const offensivePool = DATA.offensive.filter((_, i) => w.offensive[i] !== false);
+    const defensivePool = DATA.defensive.filter((_, i) => w.defensive[i] !== false);
+    const supportPool   = [...DATA.support.filter((_, i) => w.support[i] !== false), ...vehiclePool];
+    const backpackPool  = DATA.backpack.filter((_, i) => w.backpack[i] !== false);
+    const l = state.loadout;
+    const strats = [];
+    if (l['Offensive'] && offensivePool.length) strats.push(rand(offensivePool));
+    if (l['Defensive'] && defensivePool.length) strats.push(rand(defensivePool));
+    if (l['Support']   && supportPool.length)   strats.push(rand(supportPool));
+    if (l['Backpack']  && backpackPool.length)   strats.push(rand(backpackPool));
+    if (strats.length) result.stratagems = strats;
+  } else if (slot === 'booster') {
+    const pool = DATA.booster.filter((_, i) => w.booster[i] !== false);
+    if (pool.length) result.booster = rand(pool);
+  }
+
+  renderResult(podId, result);
+  if (window.syncPodResult) window.syncPodResult(podId, result);
 }
 
 function togglePod(podId, btn) {
@@ -697,6 +753,7 @@ window.joinRoom = function() {
 
   const resultsRef = ref(db, 'rooms/' + code + '/results');
   const disabledRef = ref(db, 'rooms/' + code + '/disabled');
+  const warbandsRef = ref(db, 'rooms/' + code + '/warbonds');
 
   const unsubResults = onValue(resultsRef, snapshot => {
     if (isReceiving) return;
@@ -724,7 +781,33 @@ window.joinRoom = function() {
     }
   });
 
-  roomRef = () => { unsubResults(); unsubDisabled(); };
+  const unsubWarbonds = onValue(warbandsRef, snapshot => {
+    if (isReceiving) return;
+    const data = snapshot.val();
+    if (!data) return;
+    isReceiving = true;
+    for (let i = 1; i <= 4; i++) {
+      if (!data[i]) continue;
+      const podWarbonds = data[i];
+      const panel = document.getElementById('panel-' + i + '-warbonds');
+      if (!panel) continue;
+      const btns = panel.querySelectorAll('.warbond-btn');
+      btns.forEach((btn, idx) => {
+        const wbId = WARBONDS[idx].id;
+        if (podWarbonds[wbId] === undefined) return;
+        const nowSelected = podWarbonds[wbId];
+        if (podStates[i].warbonds[wbId] === nowSelected) return;
+        podStates[i].warbonds[wbId] = nowSelected;
+        btn.classList.toggle('selected', nowSelected);
+        const affectedItems = WARBOND_ITEMS[wbId] || [];
+        affectedItems.forEach(itemName => lockItemByName(i, itemName, !nowSelected));
+      });
+      updateTabCounts(i);
+    }
+    isReceiving = false;
+  });
+
+  roomRef = () => { unsubResults(); unsubDisabled(); unsubWarbonds(); };
 
   push(ref(db, 'rooms/' + code + '/presence'), { joined: Date.now() });
   setStatus('connected', 'Connected · ' + code);
@@ -767,12 +850,15 @@ window.syncDisabled = function() {
   for (let i = 1; i <= 4; i++) disabled[i] = podStates[i].disabled;
   set(ref(db, 'rooms/' + currentRoom + '/disabled'), disabled);
 };
+
+window.syncWarbonds = function(podId) {
+  if (!currentRoom) return;
+  set(ref(db, 'rooms/' + currentRoom + '/warbonds/' + podId), podStates[podId].warbonds);
+};
 </script>
 
-<div class="footer" style="text-align:center;padding:1.5rem;color:var(--text2);font-size:0.75rem;letter-spacing:0.1em;border-top:1px solid var(--border);margin-top:2rem;">
+<div class="footer" style="text-align:center;padding:1.5rem 2rem;color:var(--text2);font-size:0.75rem;letter-spacing:0.1em;border-top:1px solid var(--border);margin-top:2rem;">
   Helldivers 2 &mdash; Super Earth Armed Forces &mdash; Data current as of Exo Experts update
-  <br><br>
-  <button onclick="downloadApp()" style="font-family:'Rajdhani',sans-serif;font-size:0.75rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:0.4rem 1.2rem;background:transparent;border:1px solid var(--border2);color:var(--text2);cursor:pointer;margin-top:0.5rem;">&#8659; Download App</button>
 </div>
 </body>
 </html>
