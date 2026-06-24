@@ -167,7 +167,7 @@ const DATA = {
   throwable: ["G-10 Incendiary","G-109 Urchin","G-12 High Explosive","G-123 Thermite","G-13 Incendiary Impact","G-142 Pyrotech","G-16 Impact","G-23 Stun","G-31 Arc","G-3 Smoke","G-4 Gas","G-48 Giga Grenade","G-50 Seeker","G-6 Frag","G-7 Pineapple","G/SH-39 Shield","K-2 Throwing Knife","TM-1 Lure Mine"],
   armor: ["A-35 Recon","A-9 Helljumper","AC-1 Dutiful","AC-2 Obedient","AF-02 Haz-Master","AF-50 Noxious Ranger","BP-20 Correct Officer","BP-32 Jackboot","CE-07 Demolition Specialist","CE-27 Ground Breaker","CE-35 Trench Engineer","CM-09 Bonesnapper","CPG-48 Sapper","CPH-26 Commandant","CW-22 Kodiak","CW-36 Winter Warrior","CW-4 Arctic Ranger","DP-11 Champion of the People","DP-40 Hero of the Federation","DS-191 Scorpion","DS-42 Federation's Blade","EX-00 Prototype X","EX-03 Prototype 3","EX-16 Prototype 16","FS-05 Marksman","FS-23 Battle Master","FS-55 Devastator","GS-17 Frontier Marshal","GS-66 Lawmaker","I-102 Draconaught","IE-12 Righteous","IE-3 Martyr","O-2 Heavy Operator","O-3 Free Spirit","PH-202 Twigsnapper","PH-9 Predator","RE-1861 Parade Commander","RE-2310 Honorary Guard","RS-20 Constrictor","RS-40 Beast of Prey","RS-67 Null Cipher","RS-89 Shadow Paragon","SA-04 Combat Technician","SA-07 Headfirst","SA-08 Ram","SA-12 Servo Assisted","SA-25 Steel Trooper","SA-32 Dynamo","SC-30 Trailblazer Scout","SC-34 Infiltrator","SR-18 Roadblock","SR-24 Street Scout","UF-16 Inspector","UF-50 Bloodhound"],
   offensive: ["Orbital Gatling Barrage","Orbital Airburst Strike","Orbital 120MM HE Barrage","Orbital 380MM HE Barrage","Orbital Walking Barrage","Orbital Laser","Orbital Railcannon Strike","Orbital Precision Strike","Orbital Gas Strike","Orbital EMS Strike","Orbital Smoke Strike","Orbital Napalm Barrage","Eagle 500kg Bomb","Eagle Airstrike","Eagle Cluster Bomb","Eagle Napalm Airstrike","Eagle Strafing Run","Eagle 110mm Rocket Pods","Eagle Smoke Strike"],
-  defensive: ["A/ARC-3 Tesla Tower","A/MG-43 Machine Gun Sentry","A/M-12 Mortar Sentry","A/M-23 EMS Mortar Sentry","A/AC-8 Autocannon Sentry","A/MLS-4X Rocket Sentry","A/G-16 Gatling Sentry","A/FLAM-40 Flame Sentry","A/GM-17 Gas Mortar Sentry","A/LAS-98 Laser Sentry","MD-6 Anti-Personnel Minefield","MD-I4 Incendiary Mines","MD-17 Anti-Tank Mines","MD-8 Gas Mines","E/AT-12 Anti-Tank Emplacement","E/MG-101 HMG Emplacement","E/GL-21 Grenadier Battlement","FX-12 Shield Generator Relay","Reinforcement Pods"],
+  defensive: ["A/ARC-3 Tesla Tower","A/MG-43 Machine Gun Sentry","A/M-12 Mortar Sentry","A/M-23 EMS Mortar Sentry","A/AC-8 Autocannon Sentry","A/MLS-4X Rocket Sentry","A/G-16 Gatling Sentry","A/FLAM-40 Flame Sentry","A/GM-17 Gas Mortar Sentry","A/LAS-98 Laser Sentry","MD-6 Anti-Personnel Minefield","MD-I4 Incendiary Mines","MD-17 Anti-Tank Mines","MD-8 Gas Mines","E/AT-12 Anti-Tank Emplacement","E/MG-101 HMG Emplacement","E/GL-21 Grenadier Battlement","FX-12 Shield Generator Relay"],
   support: ["MG-43 Machine Gun","APW-1 Anti-Materiel Rifle","M-105 Stalwart","EAT-17 Expendable Anti-Tank","EAT-411 Leveller","EAT-700 Expendable Napalm","GR-8 Recoilless Rifle","FLAM-40 Flamethrower","AC-8 Autocannon","RS-422 Railgun","FAF-14 Spear","GL-21 Grenade Launcher","GL-28 Belt-Fed Grenade Launcher","GL-52 De-Escalator","LAS-98 Laser Cannon","LAS-99 Quasar Cannon","ARC-3 Arc Thrower","RL-77 Airburst Rocket Launcher","MG-206 Heavy Machine Gun","MS-11 Solo Silo","M-1000 Maxigun","MGX-42 Bullet Storm","MLS-4X Commando","S-11 Speargun","TX-41 Sterilizer","B/FLAM-80 Cremator","B/MD C4 Pack","StA-X3 W.A.S.P. Launcher"],
   vehicle: ["EXO-45 Patriot Exosuit","EXO-49 Emancipator Exosuit","EXO-51 Lumberer Exosuit","EXO-55 Breakthrough Exosuit","M-103 Supply FRV","M-104 Incinerator FRV","M-102 Fast Recon Vehicle","TD-220 Bastion MK XVI"],
   backpack: ["B-1 Supply Pack","B-100 Portable Hellbomb","LIFT-850 Jump Pack","LIFT-860 Hover Pack","LIFT-182 Warp Pack","SH-20 Ballistic Shield Backpack","SH-32 Shield Generator Pack","SH-51 Directional Shield","AX/AR-23 Guard Dog","AX/LAS-5 Rover","AX/ARC-3 K-9","AX/FLAM-75 Hot Dog","AX/TX-13 Dog Breath"],
@@ -243,6 +243,14 @@ const WARBOND_ITEMS = {
   KZ:   ["AC-1 Dutiful","StA-52 Assault Rifle","PLAS-39 Accelerator Rifle","AC-2 Obedient","StA-11 SMG"]
 };
 
+// Map each stratagem to its pool label for display in results
+const STRAT_POOL_LABEL = {};
+DATA.offensive.forEach(s => STRAT_POOL_LABEL[s] = 'Offensive');
+DATA.defensive.forEach(s => STRAT_POOL_LABEL[s] = 'Defensive');
+DATA.support.forEach(s => STRAT_POOL_LABEL[s] = 'Support');
+DATA.backpack.forEach(s => STRAT_POOL_LABEL[s] = 'Backpack');
+DATA.vehicle.forEach(s => STRAT_POOL_LABEL[s] = 'Vehicle');
+
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function randFiltered(arr, checks) {
   const enabled = arr.filter((_, i) => checks[i] !== false);
@@ -258,6 +266,7 @@ function initPodState() {
     disabled: false,
     loadout: Object.fromEntries(LOADOUT_CATS.map(c => [c, true])),
     vehicles: { exosuits: false, frvs: false, other: false },
+    atLeastOne: false,
     weapons: weaponChecks,
     warbonds: Object.fromEntries(WARBONDS.map(w => [w.id, true])),
     superstore: {
@@ -360,12 +369,18 @@ function buildPod(podId) {
           <button class="select-all-btn" onclick="toggleAllLoadout(${podId},this)">All</button>
         </div>
         <div class="loadout-toggles">${loadoutToggles}</div>
-        <div class="vehicle-toggles">
+        <div class="vehicle-toggles" style="margin-top:0.4rem;">
           <div class="vehicle-toggle-label">Vehicle Stratagems</div>
           <div class="vehicle-sub-toggles">
             <label class="toggle-item"><input type="checkbox" onchange="toggleVehicle(${podId},'exosuits',this)"> Exosuits</label>
             <label class="toggle-item"><input type="checkbox" onchange="toggleVehicle(${podId},'frvs',this)"> FRVs</label>
             <label class="toggle-item"><input type="checkbox" onchange="toggleVehicle(${podId},'other',this)"> Other</label>
+          </div>
+        </div>
+        <div class="vehicle-toggles" style="margin-top:0.4rem;">
+          <div class="vehicle-toggle-label">Stratagem Options</div>
+          <div class="vehicle-sub-toggles">
+            <label class="toggle-item"><input type="checkbox" id="atleastone-${podId}" onchange="toggleAtLeastOne(${podId},this)"> At Least One per pool</label>
           </div>
         </div>
       </div>
@@ -411,6 +426,10 @@ function switchSsCat(podId, cat, btn) {
 
 function toggleWeaponSection(podId, key) {
   document.getElementById('wc-' + podId + '-' + key).classList.toggle('open');
+}
+
+function toggleAtLeastOne(podId, cb) {
+  podStates[podId].atLeastOne = cb.checked;
 }
 
 function toggleVehicle(podId, subType, cb) {
@@ -563,7 +582,7 @@ function generateLoadout(podId) {
   const vehiclePool = DATA.vehicle.filter((_, i) => w.vehicle[i] !== false);
   const offensivePool = DATA.offensive.filter((_, i) => w.offensive[i] !== false);
   const defensivePool = DATA.defensive.filter((_, i) => w.defensive[i] !== false);
-  const supportPool   = [...DATA.support.filter((_, i) => w.support[i] !== false), ...vehiclePool];
+  const supportPool   = DATA.support.filter((_, i) => w.support[i] !== false);
   const backpackPool  = DATA.backpack.filter((_, i) => w.backpack[i] !== false);
   const boosterPool   = DATA.booster.filter((_, i) => w.booster[i] !== false);
 
@@ -573,11 +592,44 @@ function generateLoadout(podId) {
   if (l['Throwable'] && throwablePool.length)  result.throwable = rand(throwablePool);
   if (l['Armor']     && armorPool.length)      result.armor     = rand(armorPool);
 
+  // Build a combined pool from all enabled stratagem categories + vehicles, then pick 4 unique items
   const strats = [];
-  if (l['Offensive'] && offensivePool.length) strats.push(rand(offensivePool));
-  if (l['Defensive'] && defensivePool.length) strats.push(rand(defensivePool));
-  if (l['Support']   && supportPool.length)   strats.push(rand(supportPool));
-  if (l['Backpack']  && backpackPool.length)   strats.push(rand(backpackPool));
+
+  if (state.atLeastOne) {
+    // In atLeastOne mode, vehicles count as support — merge them in
+    const supportPlusVehicles = [...supportPool, ...vehiclePool];
+    const guaranteedPools = [offensivePool, defensivePool, supportPlusVehicles, backpackPool].filter(p => p.length);
+    const used = new Set();
+    for (const pool of guaranteedPools) {
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      for (const item of shuffled) {
+        if (!used.has(item)) { used.add(item); strats.push(item); break; }
+      }
+    }
+    if (strats.length < 4) {
+      const combined = [...offensivePool, ...defensivePool, ...supportPlusVehicles, ...backpackPool]
+        .filter(item => !used.has(item))
+        .sort(() => Math.random() - 0.5);
+      for (const item of combined) {
+        if (strats.length >= 4) break;
+        if (!used.has(item)) { used.add(item); strats.push(item); }
+      }
+    }
+  } else {
+    // Normal mode: only use enabled pools, pick 4 randomly
+    const stratPool = [];
+    if (l['Offensive']) offensivePool.forEach(i => stratPool.push(i));
+    if (l['Defensive']) defensivePool.forEach(i => stratPool.push(i));
+    if (l['Support'])   supportPool.forEach(i => stratPool.push(i));
+    if (l['Backpack'])  backpackPool.forEach(i => stratPool.push(i));
+    vehiclePool.forEach(i => stratPool.push(i));
+    const seen = new Set();
+    for (const item of stratPool.sort(() => Math.random() - 0.5)) {
+      if (!seen.has(item)) { seen.add(item); strats.push(item); }
+      if (strats.length === 4) break;
+    }
+  }
+
   if (strats.length) result.stratagems = strats;
 
   if (l['Booster'] && boosterPool.length) result.booster = rand(boosterPool);
@@ -603,7 +655,10 @@ function renderResult(podId, result) {
   if (result.armor)     html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Armor</div><div class="result-value">${result.armor}</div></div>${rb('armor')}</div>`;
   if (result.stratagems && result.stratagems.length) {
     html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Stratagems</div><div class="result-value">`;
-    result.stratagems.forEach(s => { html += `<span class="result-strat">${s}</span>`; });
+    result.stratagems.forEach(s => {
+      const label = STRAT_POOL_LABEL[s] ? ` <span style="color:var(--text2);font-size:0.6rem;">(${STRAT_POOL_LABEL[s]})</span>` : '';
+      html += `<span class="result-strat">${s}${label}</span>`;
+    });
     html += `</div></div>${rb('stratagems')}</div>`;
   }
   if (result.booster) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Booster</div><div class="result-value">${result.booster}</div></div>${rb('booster')}</div>`;
@@ -638,14 +693,41 @@ function rerollSection(podId, slot) {
     const vehiclePool = DATA.vehicle.filter((_, i) => w.vehicle[i] !== false);
     const offensivePool = DATA.offensive.filter((_, i) => w.offensive[i] !== false);
     const defensivePool = DATA.defensive.filter((_, i) => w.defensive[i] !== false);
-    const supportPool   = [...DATA.support.filter((_, i) => w.support[i] !== false), ...vehiclePool];
+    const supportPool   = DATA.support.filter((_, i) => w.support[i] !== false);
     const backpackPool  = DATA.backpack.filter((_, i) => w.backpack[i] !== false);
     const l = state.loadout;
     const strats = [];
-    if (l['Offensive'] && offensivePool.length) strats.push(rand(offensivePool));
-    if (l['Defensive'] && defensivePool.length) strats.push(rand(defensivePool));
-    if (l['Support']   && supportPool.length)   strats.push(rand(supportPool));
-    if (l['Backpack']  && backpackPool.length)   strats.push(rand(backpackPool));
+    if (state.atLeastOne) {
+      const supportPlusVehicles = [...supportPool, ...vehiclePool];
+      const guaranteedPools = [offensivePool, defensivePool, supportPlusVehicles, backpackPool].filter(p => p.length);
+      const used = new Set();
+      for (const pool of guaranteedPools) {
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
+        for (const item of shuffled) {
+          if (!used.has(item)) { used.add(item); strats.push(item); break; }
+        }
+      }
+      if (strats.length < 4) {
+        const combined = [...offensivePool, ...defensivePool, ...supportPlusVehicles, ...backpackPool]
+          .filter(item => !used.has(item)).sort(() => Math.random() - 0.5);
+        for (const item of combined) {
+          if (strats.length >= 4) break;
+          if (!used.has(item)) { used.add(item); strats.push(item); }
+        }
+      }
+    } else {
+      const stratPool = [];
+      if (l['Offensive']) offensivePool.forEach(i => stratPool.push(i));
+      if (l['Defensive']) defensivePool.forEach(i => stratPool.push(i));
+      if (l['Support'])   supportPool.forEach(i => stratPool.push(i));
+      if (l['Backpack'])  backpackPool.forEach(i => stratPool.push(i));
+      vehiclePool.forEach(i => stratPool.push(i));
+      const seen = new Set();
+      for (const item of stratPool.sort(() => Math.random() - 0.5)) {
+        if (!seen.has(item)) { seen.add(item); strats.push(item); }
+        if (strats.length === 4) break;
+      }
+    }
     if (strats.length) result.stratagems = strats;
   } else if (slot === 'booster') {
     const pool = DATA.booster.filter((_, i) => w.booster[i] !== false);
