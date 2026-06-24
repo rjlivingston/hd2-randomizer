@@ -606,13 +606,14 @@ function togglePod(podId, btn) {
   btn.textContent = isDisabled ? '+' : '\u2212';
   podStates[podId].disabled = isDisabled;
   if (isDisabled) renderResult(podId, null);
+  if (window.syncDisabled) window.syncDisabled();
 }
 
 function randomizePod(podId) {
   if (podStates[podId].disabled) return;
   const result = generateLoadout(podId);
   renderResult(podId, result);
-  syncPodResult(podId, result);
+  if (window.syncPodResult) window.syncPodResult(podId, result);
 }
 
 function randomizeAll() {
@@ -625,7 +626,7 @@ function randomizeAll() {
       results[i] = null;
     }
   }
-  syncAllResults(results);
+  if (window.syncAllResults) window.syncAllResults(results);
 }
 
 // Build grid
@@ -640,9 +641,10 @@ for (let i = 1; i <= 4; i++) {
 </script>
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, onValue, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyB9yprLLtNucBPcMnWHzlJvRXjGqLz58Ps",
   authDomain: "hd2-radomizer.firebaseapp.com",
@@ -653,14 +655,13 @@ const firebaseConfig = {
   appId: "1:867568202436:web:f102e33a512d5ef7be8f91"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 let currentRoom = null;
 let roomRef = null;
 let isReceiving = false;
 
-// Check URL for room code on load
 const urlParams = new URLSearchParams(window.location.search);
 const urlRoom = urlParams.get('room');
 if (urlRoom) {
@@ -675,47 +676,41 @@ function setStatus(state, text) {
   label.textContent = text;
 }
 
-function joinRoom() {
+window.joinRoom = function() {
   const input = document.getElementById('room-input');
   const code = input.value.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '');
   if (!code) { input.focus(); return; }
 
-  // Leave current room if any
-  if (roomRef) roomRef.off();
+  if (roomRef) roomRef();
 
   currentRoom = code;
-  roomRef = db.ref('rooms/' + code);
-
-  // Update URL so it can be shared
   const newUrl = window.location.pathname + '?room=' + code;
   window.history.replaceState({}, '', newUrl);
 
-  // Update display
   document.getElementById('room-display').textContent = '🔗 Share: ' + window.location.href;
   const btn = document.getElementById('sync-btn');
   btn.textContent = 'Leave Room';
   btn.classList.add('active');
-  btn.onclick = leaveRoom;
+  btn.onclick = window.leaveRoom;
 
   setStatus('syncing', 'Connecting...');
 
-  // Listen for result changes from others
-  roomRef.child('results').on('value', snapshot => {
+  const resultsRef = ref(db, 'rooms/' + code + '/results');
+  const disabledRef = ref(db, 'rooms/' + code + '/disabled');
+
+  const unsubResults = onValue(resultsRef, snapshot => {
     if (isReceiving) return;
     const data = snapshot.val();
     if (!data) { setStatus('connected', 'Connected · ' + code); return; }
     isReceiving = true;
     for (let i = 1; i <= 4; i++) {
-      if (data[i] !== undefined) {
-        renderResult(i, data[i]);
-      }
+      if (data[i] !== undefined) renderResult(i, data[i]);
     }
     isReceiving = false;
     setStatus('connected', 'Connected · ' + code);
   });
 
-  // Listen for pod disabled state
-  roomRef.child('disabled').on('value', snapshot => {
+  const unsubDisabled = onValue(disabledRef, snapshot => {
     const data = snapshot.val();
     if (!data) return;
     for (let i = 1; i <= 4; i++) {
@@ -729,13 +724,14 @@ function joinRoom() {
     }
   });
 
-  // Announce presence
-  roomRef.child('presence').push({ joined: Date.now() });
-  setStatus('connected', 'Connected · ' + code);
-}
+  roomRef = () => { unsubResults(); unsubDisabled(); };
 
-function leaveRoom() {
-  if (roomRef) roomRef.off();
+  push(ref(db, 'rooms/' + code + '/presence'), { joined: Date.now() });
+  setStatus('connected', 'Connected · ' + code);
+};
+
+window.leaveRoom = function() {
+  if (roomRef) roomRef();
   roomRef = null;
   currentRoom = null;
   window.history.replaceState({}, '', window.location.pathname);
@@ -743,37 +739,33 @@ function leaveRoom() {
   const btn = document.getElementById('sync-btn');
   btn.textContent = 'Join Room';
   btn.classList.remove('active');
-  btn.onclick = joinRoom;
+  btn.onclick = window.joinRoom;
   setStatus('', 'Not connected');
-}
+};
 
-function syncPodResult(podId, result) {
-  if (!currentRoom || !roomRef) return;
+window.syncPodResult = function(podId, result) {
+  if (!currentRoom) return;
   setStatus('syncing', 'Syncing...');
-  roomRef.child('results/' + podId).set(result || null)
+  set(ref(db, 'rooms/' + currentRoom + '/results/' + podId), result || null)
     .then(() => setStatus('connected', 'Connected · ' + currentRoom))
-    .catch(e => setStatus('', 'Sync error'));
-}
+    .catch(() => setStatus('', 'Sync error'));
+};
 
-function syncAllResults(results) {
-  if (!currentRoom || !roomRef) return;
+window.syncAllResults = function(results) {
+  if (!currentRoom) return;
   setStatus('syncing', 'Syncing...');
   const payload = {};
   for (let i = 1; i <= 4; i++) payload[i] = results[i] || null;
-  roomRef.child('results').set(payload)
+  set(ref(db, 'rooms/' + currentRoom + '/results'), payload)
     .then(() => setStatus('connected', 'Connected · ' + currentRoom))
-    .catch(e => setStatus('', 'Sync error'));
-}
+    .catch(() => setStatus('', 'Sync error'));
+};
 
-// Override togglePod to also sync disabled state
-const _origTogglePod = togglePod;
-window.togglePod = function(podId, btn) {
-  _origTogglePod(podId, btn);
-  if (currentRoom && roomRef) {
-    const disabled = {};
-    for (let i = 1; i <= 4; i++) disabled[i] = podStates[i].disabled;
-    roomRef.child('disabled').set(disabled);
-  }
+window.syncDisabled = function() {
+  if (!currentRoom) return;
+  const disabled = {};
+  for (let i = 1; i <= 4; i++) disabled[i] = podStates[i].disabled;
+  set(ref(db, 'rooms/' + currentRoom + '/disabled'), disabled);
 };
 </script>
 
