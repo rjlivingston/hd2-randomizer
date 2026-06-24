@@ -139,7 +139,7 @@
       <div class="sync-dot" id="sync-dot"></div>
       <span class="sync-label" id="sync-label">Not connected</span>
     </div>
-    <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" />
+    <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" onkeydown="if(event.key==='Enter') joinRoom()" />
     <button class="sync-btn" id="sync-btn" onclick="joinRoom()">Join Room</button>
     <span class="room-code-display" id="room-display"></span>
   </div>
