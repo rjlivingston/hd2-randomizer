@@ -251,6 +251,13 @@ DATA.support.forEach(s => STRAT_POOL_LABEL[s] = 'Support');
 DATA.backpack.forEach(s => STRAT_POOL_LABEL[s] = 'Backpack');
 DATA.vehicle.forEach(s => STRAT_POOL_LABEL[s] = 'Vehicle');
 
+// Support weapons that include their own backpack — count as Support + Backpack slot
+const SUPPORT_WITH_BACKPACK = new Set([
+  "GR-8 Recoilless Rifle","AC-8 Autocannon","FAF-14 Spear","GL-28 Belt-Fed Grenade Launcher",
+  "RL-77 Airburst Rocket Launcher","M-1000 Maxigun","B/FLAM-80 Cremator",
+  "B/MD C4 Pack","StA-X3 W.A.S.P. Launcher"
+]);
+
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function randFiltered(arr, checks) {
   const enabled = arr.filter((_, i) => checks[i] !== false);
@@ -610,22 +617,33 @@ function generateLoadout(podId) {
       const combined = [...offensivePool, ...defensivePool, ...supportPlusVehicles, ...backpackPool]
         .filter(item => !used.has(item))
         .sort(() => Math.random() - 0.5);
+      const backpackUsed = strats.some(s => STRAT_POOL_LABEL[s] === 'Backpack' || SUPPORT_WITH_BACKPACK.has(s));
       for (const item of combined) {
         if (strats.length >= 4) break;
-        if (!used.has(item)) { used.add(item); strats.push(item); }
+        if (used.has(item)) continue;
+        const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
+        const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
+        if ((isBackpack || includesBackpack) && backpackUsed) continue;
+        used.add(item); strats.push(item);
       }
     }
   } else {
-    // Normal mode: only use enabled pools, pick 4 randomly
+    // Normal mode: only use enabled pools, pick 4 randomly, max one backpack slot
     const stratPool = [];
     if (l['Offensive']) offensivePool.forEach(i => stratPool.push(i));
     if (l['Defensive']) defensivePool.forEach(i => stratPool.push(i));
     if (l['Support'])   supportPool.forEach(i => stratPool.push(i));
     if (l['Backpack'])  backpackPool.forEach(i => stratPool.push(i));
     vehiclePool.forEach(i => stratPool.push(i));
+    let backpackUsed = false;
     const seen = new Set();
     for (const item of stratPool.sort(() => Math.random() - 0.5)) {
-      if (!seen.has(item)) { seen.add(item); strats.push(item); }
+      if (seen.has(item)) continue;
+      const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
+      const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
+      if ((isBackpack || includesBackpack) && backpackUsed) continue;
+      if (isBackpack || includesBackpack) backpackUsed = true;
+      seen.add(item); strats.push(item);
       if (strats.length === 4) break;
     }
   }
@@ -656,7 +674,9 @@ function renderResult(podId, result) {
   if (result.stratagems && result.stratagems.length) {
     html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Stratagems</div><div class="result-value">`;
     result.stratagems.forEach(s => {
-      const label = STRAT_POOL_LABEL[s] ? ` <span style="color:var(--text2);font-size:0.6rem;">(${STRAT_POOL_LABEL[s]})</span>` : '';
+      let poolLabel = STRAT_POOL_LABEL[s] || '';
+      if (SUPPORT_WITH_BACKPACK.has(s)) poolLabel = 'Support + Backpack';
+      const label = poolLabel ? ` <span style="color:var(--text2);font-size:0.6rem;">(${poolLabel})</span>` : '';
       html += `<span class="result-strat">${s}${label}</span>`;
     });
     html += `</div></div>${rb('stratagems')}</div>`;
@@ -710,9 +730,14 @@ function rerollSection(podId, slot) {
       if (strats.length < 4) {
         const combined = [...offensivePool, ...defensivePool, ...supportPlusVehicles, ...backpackPool]
           .filter(item => !used.has(item)).sort(() => Math.random() - 0.5);
+        const backpackUsed = strats.some(s => STRAT_POOL_LABEL[s] === 'Backpack' || SUPPORT_WITH_BACKPACK.has(s));
         for (const item of combined) {
           if (strats.length >= 4) break;
-          if (!used.has(item)) { used.add(item); strats.push(item); }
+          if (used.has(item)) continue;
+          const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
+          const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
+          if ((isBackpack || includesBackpack) && backpackUsed) continue;
+          used.add(item); strats.push(item);
         }
       }
     } else {
@@ -722,9 +747,15 @@ function rerollSection(podId, slot) {
       if (l['Support'])   supportPool.forEach(i => stratPool.push(i));
       if (l['Backpack'])  backpackPool.forEach(i => stratPool.push(i));
       vehiclePool.forEach(i => stratPool.push(i));
+      let backpackUsed = false;
       const seen = new Set();
       for (const item of stratPool.sort(() => Math.random() - 0.5)) {
-        if (!seen.has(item)) { seen.add(item); strats.push(item); }
+        if (seen.has(item)) continue;
+        const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
+        const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
+        if ((isBackpack || includesBackpack) && backpackUsed) continue;
+        if (isBackpack || includesBackpack) backpackUsed = true;
+        seen.add(item); strats.push(item);
         if (strats.length === 4) break;
       }
     }
@@ -941,6 +972,8 @@ window.syncWarbonds = function(podId) {
 
 <div class="footer" style="text-align:center;padding:1.5rem 2rem;color:var(--text2);font-size:0.75rem;letter-spacing:0.1em;border-top:1px solid var(--border);margin-top:2rem;">
   Helldivers 2 &mdash; Super Earth Armed Forces &mdash; Data current as of Exo Experts update
+  <br><br>
+  App not possible without the fine divers over at <a href="https://helldivers.wiki.gg/" target="_blank" style="color:var(--gold);text-decoration:none;letter-spacing:0.05em;">helldivers.wiki.gg</a>
 </div>
 </body>
 </html>
