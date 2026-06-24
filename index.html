@@ -106,7 +106,7 @@
   .result-strat { color: var(--accent2); display: block; }
   .question-mark { font-size: 3rem; color: var(--border2); text-align: center; width: 100%; }
 
-  .party-controls { text-align: center; padding: 1rem 0; }
+  .catchphrase-banner { text-align: center; font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); padding: 0.4rem 1rem; min-height: 1.8rem; }
   .big-randomize-btn { font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.75rem 3rem; background: transparent; border: 2px solid var(--gold); color: var(--gold); cursor: pointer; transition: all 0.2s; }
   .big-randomize-btn:hover { background: var(--gold); color: #0a0e1a; }
 
@@ -143,6 +143,7 @@
     <button class="sync-btn" id="sync-btn" onclick="joinRoom()">Join Room</button>
     <span class="room-code-display" id="room-display"></span>
   </div>
+  <div class="catchphrase-banner" id="catchphrase-banner"></div>
   <div class="party-grid" id="party-grid"></div>
   <div class="party-controls">
     <button class="big-randomize-btn" onclick="randomizeAll()">&#9654; Randomize All Hellpods</button>
@@ -258,7 +259,43 @@ const SUPPORT_WITH_BACKPACK = new Set([
   "B/MD C4 Pack","StA-X3 W.A.S.P. Launcher"
 ]);
 
+const CATCHPHRASES = [
+  "How 'bout a nice cup of LIBER-TEA?",
+  "Together for Managed Democracy.",
+  "No pain, no freedom.",
+  "Injury? What injury!",
+  "Sweet Liberty, my arm!",
+  "Gotta fix this liberty forsaken arm!",
+  "Out of ammo… I need stims!!",
+  "For Super Earthhhh!!",
+  "Not todayyy!!",
+  "Say hello to DEMOCRACY!",
+  "How'd you like the taste of freedom?",
+  "That's one more victory for the right side of history!",
+  "Let them come… Let them face the insurmountable might of the Helldivers!",
+  "My Leg!! For the love of liberty, my Leggggg.",
+  "Another sample for democracy!",
+  "Liberty save meeee…",
+  "Incoming friendly fire! Dodge… or don't. Your call.",
+  "Become a hero, become a legend… Become, a Helldiver!",
+  "We dive so humanity survives.",
+  "Together, we can overcome any swarm. We sacrifice, but never give up!",
+  "The fate of all humanity's children are in your hands. Do not let them fall.",
+  "Become part of an elite peace-keeping force.",
+  "Victory or death! Preferably victory, though.",
+  "GET SOME!",
+  "Freedom never sleeps!",
+  "Liberty for ALL!"
+];
+
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+let catchphraseTimer = null;
+function flashCatchphrase() {
+  const banner = document.getElementById('catchphrase-banner');
+  if (!banner) return;
+  banner.textContent = CATCHPHRASES[Math.floor(Math.random() * CATCHPHRASES.length)];
+}
 function randFiltered(arr, checks) {
   const enabled = arr.filter((_, i) => checks[i] !== false);
   return enabled.length ? rand(enabled) : rand(arr);
@@ -786,6 +823,7 @@ function randomizePod(podId) {
 }
 
 function randomizeAll() {
+  flashCatchphrase();
   const results = {};
   for (let i = 1; i <= 4; i++) {
     if (!podStates[i].disabled) {
