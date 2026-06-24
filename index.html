@@ -139,8 +139,8 @@
       <div class="sync-dot" id="sync-dot"></div>
       <span class="sync-label" id="sync-label">Not connected</span>
     </div>
-    <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" onkeydown="if(event.key==='Enter') joinRoom()" />
-    <button class="sync-btn" id="sync-btn" onclick="joinRoom()">Join Room</button>
+    <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" onkeydown="if(event.key==='Enter') window.joinRoom()" />
+    <button class="sync-btn" id="sync-btn" onclick="window.joinRoom()">Join Room</button>
     <span class="room-code-display" id="room-display"></span>
   </div>
   <div class="catchphrase-banner" id="catchphrase-banner"></div>
@@ -850,7 +850,7 @@ for (let i = 1; i <= 4; i++) {
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, onValue, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, push, remove, onDisconnect, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyB9yprLLtNucBPcMnWHzlJvRXjGqLz58Ps",
@@ -868,12 +868,13 @@ const db = getDatabase(app);
 let currentRoom = null;
 let roomRef = null;
 let isReceiving = false;
+let myPresenceRef = null;
 
 const urlParams = new URLSearchParams(window.location.search);
 const urlRoom = urlParams.get('room');
 if (urlRoom) {
   document.getElementById('room-input').value = urlRoom;
-  setTimeout(() => joinRoom(), 500);
+  setTimeout(() => window.joinRoom(), 500);
 }
 
 function setStatus(state, text) {
@@ -883,7 +884,12 @@ function setStatus(state, text) {
   label.textContent = text;
 }
 
-window.joinRoom = function() {
+function touchActivity() {
+  if (!currentRoom) return;
+  set(ref(db, 'rooms/' + currentRoom + '/lastActivity'), Date.now());
+}
+
+window.joinRoom = async function() {
   const input = document.getElementById('room-input');
   const code = input.value.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '');
   if (!code) { input.focus(); return; }
@@ -894,13 +900,40 @@ window.joinRoom = function() {
   const newUrl = window.location.pathname + '?room=' + code;
   window.history.replaceState({}, '', newUrl);
 
+  setStatus('syncing', 'Connecting...');
+
+  // Check if room is stale (inactive > 1 hour) — if so, delete it first
+  const activitySnap = await get(ref(db, 'rooms/' + code + '/lastActivity'));
+  if (activitySnap.exists()) {
+    const lastActivity = activitySnap.val();
+    if (Date.now() - lastActivity > 4 * 60 * 60 * 1000) {
+      await remove(ref(db, 'rooms/' + code));
+    }
+  }
+
+  // Register this client's presence
+  myPresenceRef = push(ref(db, 'rooms/' + code + '/presence'));
+  await set(myPresenceRef, { joined: Date.now() });
+
+  // When this client disconnects, remove their presence entry
+  onDisconnect(myPresenceRef).remove();
+
+  // Watch presence count — when it hits 0, delete the room
+  const presenceRef = ref(db, 'rooms/' + code + '/presence');
+  const unsubPresence = onValue(presenceRef, snapshot => {
+    if (!snapshot.exists() && currentRoom === code) {
+      remove(ref(db, 'rooms/' + code));
+    }
+  });
+
+  // Touch activity timestamp on join
+  touchActivity();
+
   document.getElementById('room-display').textContent = '🔗 Share: ' + window.location.href;
   const btn = document.getElementById('sync-btn');
   btn.textContent = 'Leave Room';
   btn.classList.add('active');
   btn.onclick = window.leaveRoom;
-
-  setStatus('syncing', 'Connecting...');
 
   const resultsRef = ref(db, 'rooms/' + code + '/results');
   const disabledRef = ref(db, 'rooms/' + code + '/disabled');
@@ -958,15 +991,21 @@ window.joinRoom = function() {
     isReceiving = false;
   });
 
-  roomRef = () => { unsubResults(); unsubDisabled(); unsubWarbonds(); };
-
-  push(ref(db, 'rooms/' + code + '/presence'), { joined: Date.now() });
+  roomRef = () => { unsubResults(); unsubDisabled(); unsubWarbonds(); unsubPresence(); };
   setStatus('connected', 'Connected · ' + code);
 };
 
 window.leaveRoom = function() {
   if (roomRef) roomRef();
   roomRef = null;
+
+  // Remove this client's presence entry manually on clean leave
+  if (myPresenceRef) {
+    onDisconnect(myPresenceRef).cancel();
+    remove(myPresenceRef);
+    myPresenceRef = null;
+  }
+
   currentRoom = null;
   window.history.replaceState({}, '', window.location.pathname);
   document.getElementById('room-display').textContent = '';
@@ -980,6 +1019,7 @@ window.leaveRoom = function() {
 window.syncPodResult = function(podId, result) {
   if (!currentRoom) return;
   setStatus('syncing', 'Syncing...');
+  touchActivity();
   set(ref(db, 'rooms/' + currentRoom + '/results/' + podId), result || null)
     .then(() => setStatus('connected', 'Connected · ' + currentRoom))
     .catch(() => setStatus('', 'Sync error'));
@@ -988,6 +1028,7 @@ window.syncPodResult = function(podId, result) {
 window.syncAllResults = function(results) {
   if (!currentRoom) return;
   setStatus('syncing', 'Syncing...');
+  touchActivity();
   const payload = {};
   for (let i = 1; i <= 4; i++) payload[i] = results[i] || null;
   set(ref(db, 'rooms/' + currentRoom + '/results'), payload)
@@ -997,6 +1038,7 @@ window.syncAllResults = function(results) {
 
 window.syncDisabled = function() {
   if (!currentRoom) return;
+  touchActivity();
   const disabled = {};
   for (let i = 1; i <= 4; i++) disabled[i] = podStates[i].disabled;
   set(ref(db, 'rooms/' + currentRoom + '/disabled'), disabled);
@@ -1004,6 +1046,7 @@ window.syncDisabled = function() {
 
 window.syncWarbonds = function(podId) {
   if (!currentRoom) return;
+  touchActivity();
   set(ref(db, 'rooms/' + currentRoom + '/warbonds/' + podId), podStates[podId].warbonds);
 };
 </script>
