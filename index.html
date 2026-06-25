@@ -476,11 +476,18 @@ function buildPod(podId) {
   const wb = WARBONDS.length;
 
   return `
-    <div class="hellpod-header">
-      <span class="hellpod-title">Hellpod ${podId}</span>
-      <div style="display:flex;gap:0.4rem;align-items:center;">
+    <div class="hellpod-header" style="flex-direction:column;align-items:stretch;gap:0.3rem;">
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <span class="hellpod-title" style="flex:1;">Hellpod ${podId} <span id="claim-${podId}" style="font-size:0.6rem;font-weight:400;color:var(--gold);letter-spacing:0.1em;"></span></span>
+        <button id="claim-btn-${podId}" class="select-all-btn" onclick="claimPod(${podId})" style="font-size:0.55rem;padding:0.2rem 0.5rem;letter-spacing:0.1em;">Claim!</button>
         <button class="pod-randomize-btn" onclick="randomizePod(${podId})">&#9654; Randomize</button>
         <button class="pod-toggle-btn" onclick="togglePod(${podId},this)">&#8722;</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <select id="assign-select-${podId}" onchange="assignPod(${podId})" style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.6rem;padding:0.2rem 0.3rem;width:50%;">
+          <option value="">Assign...</option>
+        </select>
+        <button class="select-all-btn" onclick="deassignPod(${podId})" style="font-size:0.55rem;padding:0.2rem 0.5rem;border-color:#602020;color:#a04040;" onmouseover="this.style.borderColor='#a04040';this.style.color='#c06060'" onmouseout="this.style.borderColor='#602020';this.style.color='#a04040'">Unassign</button>
       </div>
     </div>
     <div class="hellpod-disabled-overlay">Hellpod Disabled</div>
@@ -571,7 +578,10 @@ function toggleVehicle(podId, subType, cb) {
   podStates[podId].vehicles[subType] = cb.checked;
   VEHICLE_ITEMS[subType].forEach(itemName => lockItemByName(podId, itemName, !cb.checked));
   updateTabCounts(podId);
+  claimPod(podId);
 }
+
+function toggleSsItem(podId, cat, idx, cb) { podStates[podId].superstore[cat][idx] = cb.checked; claimPod(podId); }
 
 // Warbond presets — stored in localStorage
 function loadPresets() { try { return JSON.parse(localStorage.getItem('hd2_presets') || '{}'); } catch { return {}; } }
@@ -683,6 +693,7 @@ function loadPreset(name, podId) {
   });
   updateTabCounts(podId);
   if (window.syncWarbonds) window.syncWarbonds(podId);
+  claimPod(podId);
 }
 
 function deletePreset(name, podId) {
@@ -757,8 +768,71 @@ function toggleAllLoadout(podId, btn) {
   updateTabCounts(podId);
 }
 
-function toggleLoadout(podId, cat, cb) { podStates[podId].loadout[cat] = cb.checked; updateTabCounts(podId); }
-function toggleWeapon(podId, cat, idx, cb) { podStates[podId].weapons[cat][idx] = cb.checked; updateTabCounts(podId); }
+// Track current claims: podId -> callsign
+const currentClaims = {1: '', 2: '', 3: '', 4: ''};
+
+function claimPod(podId) {
+  const callsign = document.getElementById('callsign-input')?.value.trim() || localStorage.getItem('hd2_callsign') || 'Helldiver';
+  // Unassign from any other pod this user currently claims
+  for (let i = 1; i <= 4; i++) {
+    if (i !== podId && currentClaims[i] === callsign) {
+      deassignPod(i);
+    }
+  }
+  currentClaims[podId] = callsign;
+  updateClaimDisplay(podId, callsign);
+  if (window.syncClaim) window.syncClaim(podId);
+}
+
+function deassignPod(podId) {
+  currentClaims[podId] = '';
+  updateClaimDisplay(podId, '');
+  // Reset preset dropdown and restore all warbonds
+  const presetSel = document.getElementById('preset-select-' + podId);
+  if (presetSel) {
+    presetSel.value = '';
+    loadSelectedPreset(podId); // triggers "select all warbonds" logic
+  }
+  if (window.syncClaim) window.syncClaim(podId, true);
+}
+
+function assignPod(podId) {
+  const sel = document.getElementById('assign-select-' + podId);
+  if (!sel || !sel.value) return;
+  const callsign = sel.value;
+  // Unassign this person from any other pod they currently hold
+  for (let i = 1; i <= 4; i++) {
+    if (i !== podId && currentClaims[i] === callsign) {
+      deassignPod(i);
+    }
+  }
+  currentClaims[podId] = callsign;
+  updateClaimDisplay(podId, callsign);
+  if (window.syncClaim) window.syncClaim(podId);
+  sel.value = '';
+}
+
+function updateClaimDisplay(podId, callsign) {
+  const el = document.getElementById('claim-' + podId);
+  const btn = document.getElementById('claim-btn-' + podId);
+  if (el) el.textContent = callsign ? '· ' + callsign : '';
+  if (btn) btn.style.display = callsign ? 'none' : '';
+}
+
+// Update all assign dropdowns with current room users
+function updateAssignDropdowns(users) {
+  for (let i = 1; i <= 4; i++) {
+    const sel = document.getElementById('assign-select-' + i);
+    if (!sel) continue;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Assign...</option>' +
+      users.map(u => `<option value="${u}">${u}</option>`).join('');
+    if (current && users.includes(current)) sel.value = current;
+  }
+}
+
+function toggleLoadout(podId, cat, cb) { podStates[podId].loadout[cat] = cb.checked; updateTabCounts(podId); claimPod(podId); }
+function toggleWeapon(podId, cat, idx, cb) { podStates[podId].weapons[cat][idx] = cb.checked; updateTabCounts(podId); claimPod(podId); }
 function lockItemByName(podId, itemName, lock) {
   const weaponPanel = document.getElementById('weapon-sections-' + podId);
   weaponPanel.querySelectorAll('.weapon-item').forEach(item => {
@@ -788,6 +862,7 @@ function toggleWarbond(podId, wbId, btn) {
   affectedItems.forEach(itemName => lockItemByName(podId, itemName, !nowSelected));
   updateTabCounts(podId);
   if (window.syncWarbonds) window.syncWarbonds(podId);
+  claimPod(podId);
 }
 
 function toggleAllWarbonds(podId, btn) {
@@ -807,6 +882,7 @@ function toggleAllWarbonds(podId, btn) {
   });
   updateTabCounts(podId);
   if (window.syncWarbonds) window.syncWarbonds(podId);
+  claimPod(podId);
 }
 function toggleSsItem(podId, cat, idx, cb) { podStates[podId].superstore[cat][idx] = cb.checked; }
 
@@ -1238,11 +1314,19 @@ window.joinRoom = async function() {
     if (!snapshot.exists()) {
       if (countEl) countEl.textContent = '';
       if (currentRoom === code) remove(ref(db, 'rooms/' + code));
+      updateAssignDropdowns([]);
       return;
     }
     const entries = Object.values(snapshot.val());
-    const names = entries.map(e => e.callsign || 'Helldiver').join(', ');
-    if (countEl) countEl.textContent = `👤 ${entries.length} in room: ${names}`;
+    const names = entries.map(e => e.callsign || 'Helldiver');
+    if (countEl) countEl.textContent = `👤 ${entries.length} in room: ${names.join(', ')}`;
+    updateAssignDropdowns(names);
+    // Unassign any claimed pods whose user is no longer in the room
+    for (let i = 1; i <= 4; i++) {
+      if (currentClaims[i] && !names.includes(currentClaims[i])) {
+        deassignPod(i);
+      }
+    }
   });
 
   // Touch activity timestamp on join
@@ -1310,7 +1394,16 @@ window.joinRoom = async function() {
     isReceiving = false;
   });
 
-  roomRef = () => { unsubResults(); unsubDisabled(); unsubWarbonds(); unsubPresence(); };
+  const claimsRef = ref(db, 'rooms/' + code + '/claims');
+  const unsubClaims = onValue(claimsRef, snapshot => {
+    const data = snapshot.val() || {};
+    for (let i = 1; i <= 4; i++) {
+      currentClaims[i] = data[i] || '';
+      updateClaimDisplay(i, currentClaims[i]);
+    }
+  });
+
+  roomRef = () => { unsubResults(); unsubDisabled(); unsubWarbonds(); unsubPresence(); unsubClaims(); };
   setStatus('connected', 'Connected · ' + code);
 };
 
@@ -1365,6 +1458,11 @@ window.syncDisabled = function() {
   set(ref(db, 'rooms/' + currentRoom + '/disabled'), disabled);
 };
 
+window.syncClaim = function(podId, clear = false) {
+  if (!currentRoom) return;
+  set(ref(db, 'rooms/' + currentRoom + '/claims/' + podId), clear ? null : (document.getElementById('callsign-input')?.value.trim() || localStorage.getItem('hd2_callsign') || 'Helldiver'));
+};
+
 window.syncWarbonds = function(podId) {
   if (!currentRoom) return;
   touchActivity();
@@ -1372,9 +1470,9 @@ window.syncWarbonds = function(podId) {
 };
 
 // Wire up sync bar events after module loads
-document.getElementById('sync-btn').addEventListener('click', () => window.joinRoom());
 document.getElementById('room-input').addEventListener('keydown', e => { if (e.key === 'Enter') window.joinRoom(); });
 document.getElementById('callsign-input').addEventListener('keydown', e => { if (e.key === 'Enter') window.joinRoom(); });
+document.getElementById('sync-btn').onclick = window.joinRoom;
 
 // Restore saved callsign
 const savedCallsign = localStorage.getItem('hd2_callsign');
