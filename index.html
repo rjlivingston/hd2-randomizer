@@ -102,8 +102,15 @@
   .result-section-content { flex: 1; min-width: 0; }
   .result-label { font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text2); margin-bottom: 0.2rem; }
   .result-value { color: var(--gold2); font-size: 0.7rem; line-height: 1.4; }
-  .reroll-btn { font-size: 0.65rem; background: transparent; border: 1px solid var(--border2); color: var(--text2); cursor: pointer; padding: 0.1rem 0.3rem; flex-shrink: 0; line-height: 1; margin-top: 0.1rem; transition: all 0.15s; }
-  .reroll-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .lock-btn { font-size: 0.65rem; background: transparent; border: 1px solid var(--border2); color: var(--text2); cursor: pointer; padding: 0.1rem 0.3rem; flex-shrink: 0; line-height: 1; margin-top: 0.1rem; transition: all 0.15s; margin-left: 0.2rem; }
+  .lock-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .lock-btn.locked { border-color: var(--gold); color: var(--gold); }
+  .preset-panel { margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  .preset-list { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem; }
+  .preset-btn { font-family: 'Rajdhani', sans-serif; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; background: transparent; border: 1px solid var(--border2); color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .preset-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .preset-btn.delete { border-color: #602020; color: #a04040; }
+  .preset-btn.delete:hover { border-color: #a04040; color: #c06060; }
   .result-strat { color: var(--accent2); display: block; }
   .question-mark { font-size: 3rem; color: var(--border2); text-align: center; width: 100%; }
 
@@ -129,6 +136,7 @@
   .sync-btn.active { border-color: var(--success); color: var(--success); }
   .room-code-display { font-size: 0.65rem; color: var(--text2); letter-spacing: 0.05em; }
 </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
 <div class="header">
@@ -511,6 +519,13 @@ function buildPod(podId) {
         </div>
       </div>
       <div class="pod-panel" id="panel-${podId}-warbonds">
+        <div style="border-bottom:1px solid var(--border);margin-bottom:0.5rem;padding-bottom:0.4rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;flex-wrap:wrap;">
+            <input class="room-input" id="preset-name-${podId}" placeholder="Preset name..." style="width:110px;" />
+            <button class="select-all-btn" onclick="savePreset(${podId})">Save</button>
+          </div>
+          <div class="preset-list" id="preset-list-${podId}"></div>
+        </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
           <div style="font-size:0.65rem;color:var(--text2);letter-spacing:0.1em;">Include items from selected warbonds:</div>
           <button class="select-all-btn" onclick="toggleAllWarbonds(${podId},this)">All</button>
@@ -556,6 +571,125 @@ function toggleVehicle(podId, subType, cb) {
   podStates[podId].vehicles[subType] = cb.checked;
   VEHICLE_ITEMS[subType].forEach(itemName => lockItemByName(podId, itemName, !cb.checked));
   updateTabCounts(podId);
+}
+
+// Warbond presets — stored in localStorage
+function loadPresets() { try { return JSON.parse(localStorage.getItem('hd2_presets') || '{}'); } catch { return {}; } }
+function savePresetsToStorage(presets) { localStorage.setItem('hd2_presets', JSON.stringify(presets)); }
+
+function renderPresetList(podId) {
+  const presets = loadPresets();
+  const list = document.getElementById('preset-list-' + podId);
+  if (!list) return;
+  const names = Object.keys(presets);
+  if (!names.length) { list.innerHTML = '<span style="font-size:0.65rem;color:var(--text2);">No presets saved.</span>'; return; }
+  list.innerHTML = `
+    <div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.2rem;">
+      <select id="preset-select-${podId}" onchange="loadSelectedPreset(${podId})" style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.72rem;padding:0.25rem 0.4rem;flex:1;">
+        <option value="">— Select preset —</option>
+        ${names.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('')}
+      </select>
+      <button class="select-all-btn" onclick="updateSelectedPreset(${podId})" title="Update selected preset">Update</button>
+      <button onclick="deleteSelectedPreset(${podId})" title="Delete preset" style="background:transparent;border:none;cursor:pointer;font-size:1.1rem;padding:0.1rem 0.2rem;color:var(--text2);" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text2)'"><i class="bi bi-trash"></i></button>
+    </div>`;
+}
+
+function updateSelectedPreset(podId) {
+  const sel = document.getElementById('preset-select-' + podId);
+  if (!sel || !sel.value) return;
+  const name = sel.value;
+  const presets = loadPresets();
+  presets[name] = {...podStates[podId].warbonds};
+  savePresetsToStorage(presets);
+  for (let i = 1; i <= 4; i++) renderPresetList(i);
+  // Re-select the updated preset in this pod's dropdown
+  const thisSel = document.getElementById('preset-select-' + podId);
+  if (thisSel) thisSel.value = name;
+}
+
+function savePreset(podId) {
+  const input = document.getElementById('preset-name-' + podId);
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  const presets = loadPresets();
+  presets[name] = {...podStates[podId].warbonds};
+  savePresetsToStorage(presets);
+  input.value = '';
+  for (let i = 1; i <= 4; i++) renderPresetList(i);
+  const thisSel = document.getElementById('preset-select-' + podId);
+  if (thisSel) thisSel.value = name;
+}
+
+function loadSelectedPreset(podId) {
+  const sel = document.getElementById('preset-select-' + podId);
+  if (!sel) return;
+  if (!sel.value) {
+    // No preset selected — restore all warbonds
+    const panel = document.getElementById('panel-' + podId + '-warbonds');
+    if (!panel) return;
+    const btns = panel.querySelectorAll('.warbond-btn');
+    btns.forEach((btn, idx) => {
+      const wbId = WARBONDS[idx].id;
+      podStates[podId].warbonds[wbId] = true;
+      btn.classList.add('selected');
+      (WARBOND_ITEMS[wbId] || []).forEach(itemName => lockItemByName(podId, itemName, false));
+    });
+    updateTabCounts(podId);
+    if (window.syncWarbonds) window.syncWarbonds(podId);
+    return;
+  }
+  loadPreset(sel.value, podId);
+}
+
+function deleteSelectedPreset(podId) {
+  const sel = document.getElementById('preset-select-' + podId);
+  if (!sel || !sel.value) return;
+  const name = sel.value;
+  if (!confirm(`Delete preset "${name}"?`)) return;
+  deletePreset(name, podId);
+  // If no presets remain, select all warbonds
+  const remaining = Object.keys(loadPresets());
+  if (!remaining.length) {
+    const panel = document.getElementById('panel-' + podId + '-warbonds');
+    if (!panel) return;
+    const btns = panel.querySelectorAll('.warbond-btn');
+    btns.forEach((btn, idx) => {
+      const wbId = WARBONDS[idx].id;
+      podStates[podId].warbonds[wbId] = true;
+      btn.classList.add('selected');
+      const affectedItems = WARBOND_ITEMS[wbId] || [];
+      affectedItems.forEach(itemName => lockItemByName(podId, itemName, false));
+    });
+    updateTabCounts(podId);
+    if (window.syncWarbonds) window.syncWarbonds(podId);
+  }
+}
+
+function loadPreset(name, podId) {
+  const presets = loadPresets();
+  const saved = presets[name];
+  if (!saved) return;
+  const panel = document.getElementById('panel-' + podId + '-warbonds');
+  if (!panel) return;
+  const btns = panel.querySelectorAll('.warbond-btn');
+  btns.forEach((btn, idx) => {
+    const wbId = WARBONDS[idx].id;
+    const nowSelected = saved[wbId] !== false;
+    if (podStates[podId].warbonds[wbId] === nowSelected) return;
+    podStates[podId].warbonds[wbId] = nowSelected;
+    btn.classList.toggle('selected', nowSelected);
+    const affectedItems = WARBOND_ITEMS[wbId] || [];
+    affectedItems.forEach(itemName => lockItemByName(podId, itemName, !nowSelected));
+  });
+  updateTabCounts(podId);
+  if (window.syncWarbonds) window.syncWarbonds(podId);
+}
+
+function deletePreset(name, podId) {
+  const presets = loadPresets();
+  delete presets[name];
+  savePresetsToStorage(presets);
+  for (let i = 1; i <= 4; i++) renderPresetList(i);
 }
 
 function toggleTraitFilter(trait, cb) {
@@ -730,7 +864,7 @@ function searchWeapons(podId, query) {
   });
 }
 
-function generateLoadout(podId, guaranteed = []) {
+function generateLoadout(podId, guaranteed = [], locked = new Set(), prevResult = null) {
   const state = podStates[podId];
   const l = state.loadout;
   const w = state.weapons;
@@ -760,15 +894,19 @@ function generateLoadout(podId, guaranteed = []) {
   const boosterPool   = DATA.booster.filter((_, i) => w.booster[i] !== false);
 
   const result = {};
-  if (l['Primary']   && primaryPool.length)   result.primary   = rand(primaryPool);
-  if (l['Secondary'] && secondaryPool.length)  result.secondary = rand(secondaryPool);
-  if (l['Throwable'] && throwablePool.length)  result.throwable = rand(throwablePool);
-  if (l['Armor']     && armorPool.length)      result.armor     = rand(armorPool);
+  if (locked.has('primary') && prevResult?.primary)     result.primary   = prevResult.primary;
+  else if (l['Primary']   && primaryPool.length)        result.primary   = rand(primaryPool);
+  if (locked.has('secondary') && prevResult?.secondary) result.secondary = prevResult.secondary;
+  else if (l['Secondary'] && secondaryPool.length)      result.secondary = rand(secondaryPool);
+  if (locked.has('throwable') && prevResult?.throwable) result.throwable = prevResult.throwable;
+  else if (l['Throwable'] && throwablePool.length)      result.throwable = rand(throwablePool);
+  if (locked.has('armor') && prevResult?.armor)         result.armor     = prevResult.armor;
+  else if (l['Armor']     && armorPool.length)          result.armor     = rand(armorPool);
 
   // Start with guaranteed stratagems for this pod (pre-assigned by randomizeAll)
-  const strats = [...guaranteed];
-  const used = new Set(guaranteed);
-  let backpackUsed = guaranteed.some(s => STRAT_POOL_LABEL[s] === 'Backpack' || SUPPORT_WITH_BACKPACK.has(s));
+  const strats = locked.has('stratagems') && prevResult?.stratagems ? [...prevResult.stratagems] : [...guaranteed];
+  const used = new Set(strats);
+  let backpackUsed = strats.some(s => STRAT_POOL_LABEL[s] === 'Backpack' || SUPPORT_WITH_BACKPACK.has(s));
 
   if (state.atLeastOne) {
     const supportPlusVehicles = [...supportPool, ...vehiclePool];
@@ -817,9 +955,27 @@ function generateLoadout(podId, guaranteed = []) {
 
   if (strats.length) result.stratagems = strats;
 
-  if (l['Booster'] && boosterPool.length) result.booster = rand(boosterPool);
+  if (locked.has('booster') && prevResult?.booster) result.booster = prevResult.booster;
+  else if (l['Booster'] && boosterPool.length) result.booster = rand(boosterPool);
 
   return result;
+}
+
+// Track locked slots per pod
+const lockedSlots = {1: new Set(), 2: new Set(), 3: new Set(), 4: new Set()};
+
+function toggleLock(podId, slot, btn) {
+  if (lockedSlots[podId].has(slot)) {
+    lockedSlots[podId].delete(slot);
+    btn.classList.remove('locked');
+    btn.title = 'Lock';
+    btn.textContent = '🔓';
+  } else {
+    lockedSlots[podId].add(slot);
+    btn.classList.add('locked');
+    btn.title = 'Unlock';
+    btn.textContent = '🔒';
+  }
 }
 
 // Store last result per pod so individual sections can be re-rolled
@@ -831,13 +987,17 @@ function renderResult(podId, result) {
   el.classList.add('has-result');
   lastResults[podId] = result;
 
-  const rb = (slot) => `<button class="reroll-btn" onclick="rerollSection(${podId},'${slot}')" title="Re-roll">↻</button>`;
+  const locked = lockedSlots[podId];
+  const rb = (slot) => {
+    const isLocked = locked.has(slot);
+    return `<button class="reroll-btn${isLocked ? ' disabled' : ''}" onclick="if(!lockedSlots[${podId}].has('${slot}')) rerollSection(${podId},'${slot}')" title="${isLocked ? 'Unlock to re-roll' : 'Re-roll'}" style="opacity:${isLocked ? '0.4' : '1'}">↻</button><button class="lock-btn${isLocked ? ' locked' : ''}" onclick="toggleLock(${podId},'${slot}',this)" title="${isLocked ? 'Unlock' : 'Lock'}">${isLocked ? '🔒' : '🔓'}</button>`;
+  };
 
   let html = '';
-  if (result.primary)   html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Primary</div><div class="result-value">${result.primary}</div></div>${rb('primary')}</div>`;
-  if (result.secondary) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Secondary</div><div class="result-value">${result.secondary}</div></div>${rb('secondary')}</div>`;
-  if (result.throwable) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Throwable</div><div class="result-value">${result.throwable}</div></div>${rb('throwable')}</div>`;
-  if (result.armor)     html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Armor</div><div class="result-value">${result.armor}</div></div>${rb('armor')}</div>`;
+  if (result.primary)   html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Primary</div><div class="result-value">${result.primary}</div></div><div style="display:flex;">${rb('primary')}</div></div>`;
+  if (result.secondary) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Secondary</div><div class="result-value">${result.secondary}</div></div><div style="display:flex;">${rb('secondary')}</div></div>`;
+  if (result.throwable) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Throwable</div><div class="result-value">${result.throwable}</div></div><div style="display:flex;">${rb('throwable')}</div></div>`;
+  if (result.armor)     html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Armor</div><div class="result-value">${result.armor}</div></div><div style="display:flex;">${rb('armor')}</div></div>`;
   if (result.stratagems && result.stratagems.length) {
     html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Stratagems</div><div class="result-value">`;
     result.stratagems.forEach(s => {
@@ -846,14 +1006,15 @@ function renderResult(podId, result) {
       const label = poolLabel ? ` <span style="color:var(--text2);font-size:0.6rem;">(${poolLabel})</span>` : '';
       html += `<span class="result-strat">${s}${label}</span>`;
     });
-    html += `</div></div>${rb('stratagems')}</div>`;
+    html += `</div></div><div style="display:flex;">${rb('stratagems')}</div></div>`;
   }
-  if (result.booster) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Booster</div><div class="result-value">${result.booster}</div></div>${rb('booster')}</div>`;
+  if (result.booster) html += `<div class="result-section"><div class="result-section-content"><div class="result-label">Booster</div><div class="result-value">${result.booster}</div></div><div style="display:flex;">${rb('booster')}</div></div>`;
   el.innerHTML = html;
 }
 
 function rerollSection(podId, slot) {
   if (podStates[podId].disabled || !lastResults[podId]) return;
+  if (lockedSlots[podId].has(slot)) return; // slot is locked
   const state = podStates[podId];
   const w = state.weapons;
   const ss = state.superstore;
@@ -953,7 +1114,7 @@ function togglePod(podId, btn) {
 
 function randomizePod(podId) {
   if (podStates[podId].disabled) return;
-  const result = generateLoadout(podId);
+  const result = generateLoadout(podId, [], lockedSlots[podId], lastResults[podId]);
   renderResult(podId, result);
   if (window.syncPodResult) window.syncPodResult(podId, result);
 }
@@ -974,7 +1135,7 @@ function randomizeAll() {
 
   for (let i = 1; i <= 4; i++) {
     if (!podStates[i].disabled) {
-      results[i] = generateLoadout(i, podGuaranteed[i] || []);
+      results[i] = generateLoadout(i, podGuaranteed[i] || [], lockedSlots[i], lastResults[i]);
       renderResult(i, results[i]);
     } else {
       results[i] = null;
@@ -991,6 +1152,8 @@ for (let i = 1; i <= 4; i++) {
   pod.innerHTML = buildPod(i);
   grid.appendChild(pod);
 }
+// Render preset lists
+for (let i = 1; i <= 4; i++) renderPresetList(i);
 </script>
 
 <!-- Firebase -->
