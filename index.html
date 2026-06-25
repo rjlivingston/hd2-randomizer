@@ -139,9 +139,10 @@
       <div class="sync-dot" id="sync-dot"></div>
       <span class="sync-label" id="sync-label">Not connected</span>
     </div>
-    <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" onkeydown="if(event.key==='Enter') window.joinRoom()" />
-    <button class="sync-btn" id="sync-btn" onclick="window.joinRoom()">Join Room</button>
+    <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" />
+    <button class="sync-btn" id="sync-btn">Join Room</button>
     <span class="room-code-display" id="room-display"></span>
+    <span id="player-count" style="font-size:0.7rem;color:var(--text2);letter-spacing:0.05em;margin-left:auto;"></span>
   </div>
   <div class="catchphrase-banner" id="catchphrase-banner"></div>
   <div class="party-grid" id="party-grid"></div>
@@ -164,8 +165,8 @@ function downloadApp() {
 <script>
 const DATA = {
   primary: ["AR-2 Coyote","AR-23 Liberator","AR-23A Liberator Carbine","AR-23C Liberator Concussive","AR-23P Liberator Penetrator","AR-32 Pacifier","AR-59 Suppressor","AR-61 Tenderizer","AR/GL-21 One-Two","ARC-12 Blitzer","BR-14 Adjudicator","CB-9 Exploding Crossbow","FLAM-66 Torcher","JAR-5 Dominator","LAS-16 Sickle","LAS-16 Trident","LAS-17 Double-Edge Sickle","LAS-5 Scythe","M7S SMG","M90A Shotgun","MA5C Assault Rifle","MP-98 Knight","PLAS-1 Scorcher","PLAS-101 Purifier","PLAS-39 Accelerator Rifle","PLAS-45 Epoch","R-2 Amendment","R-2124 Constitution","R-36 Eruptor","R-6 Deadeye","R-63 Diligence","R-63CS Diligence Counter Sniper","R-72 Censor","SG-20 Halt","SG-225 Breaker","SG-225IE Breaker Incendiary","SG-225SP Breaker Spray & Pray","SG-451 Cookout","SG-8 Punisher","SG-8P Punisher Plasma","SG-8S Slugger","SMG-203 Gallant","SMG-32 Reprimand","SMG-37 Defender","SMG-72 Pummeler","SMG/FLAM-34 Stoker","StA-11 SMG","StA-52 Assault Rifle","VG-70 Variable"],
-  secondary: ["GP-31 Grenade Pistol","M6C/SOCOM Pistol","P-11 Stim Pistol","P-113 Verdict","P-19 Redeemer","P-2 Peacemaker","P-35 Re-Educator","P-4 Senator","P-72 Crisper","SG-22 Bushwhacker","CQC-9 Defoliation Tool","CQC-20 Breaching Hammer","TED-63 Dynamite"],
-  throwable: ["G-10 Incendiary","G-109 Urchin","G-12 High Explosive","G-123 Thermite","G-13 Incendiary Impact","G-142 Pyrotech","G-16 Impact","G-23 Stun","G-31 Arc","G-3 Smoke","G-4 Gas","G-48 Giga Grenade","G-50 Seeker","G-6 Frag","G-7 Pineapple","G/SH-39 Shield","K-2 Throwing Knife","TM-1 Lure Mine"],
+  secondary: ["GP-31 Grenade Pistol","M6C/SOCOM Pistol","P-11 Stim Pistol","P-113 Verdict","P-19 Redeemer","P-2 Peacemaker","P-35 Re-Educator","P-4 Senator","P-72 Crisper","SG-22 Bushwhacker","CQC-9 Defoliation Tool","CQC-20 Breaching Hammer"],
+  throwable: ["G-10 Incendiary","G-109 Urchin","G-12 High Explosive","G-123 Thermite","G-13 Incendiary Impact","G-142 Pyrotech","G-16 Impact","G-23 Stun","G-31 Arc","G-3 Smoke","G-4 Gas","G-48 Giga Grenade","G-50 Seeker","G-6 Frag","G-7 Pineapple","G/SH-39 Shield","K-2 Throwing Knife","TM-1 Lure Mine","TED-63 Dynamite"],
   armor: ["A-35 Recon","A-9 Helljumper","AC-1 Dutiful","AC-2 Obedient","AF-02 Haz-Master","AF-50 Noxious Ranger","BP-20 Correct Officer","BP-32 Jackboot","CE-07 Demolition Specialist","CE-27 Ground Breaker","CE-35 Trench Engineer","CM-09 Bonesnapper","CPG-48 Sapper","CPH-26 Commandant","CW-22 Kodiak","CW-36 Winter Warrior","CW-4 Arctic Ranger","DP-11 Champion of the People","DP-40 Hero of the Federation","DS-191 Scorpion","DS-42 Federation's Blade","EX-00 Prototype X","EX-03 Prototype 3","EX-16 Prototype 16","FS-05 Marksman","FS-23 Battle Master","FS-55 Devastator","GS-17 Frontier Marshal","GS-66 Lawmaker","I-102 Draconaught","IE-12 Righteous","IE-3 Martyr","O-2 Heavy Operator","O-3 Free Spirit","PH-202 Twigsnapper","PH-9 Predator","RE-1861 Parade Commander","RE-2310 Honorary Guard","RS-20 Constrictor","RS-40 Beast of Prey","RS-67 Null Cipher","RS-89 Shadow Paragon","SA-04 Combat Technician","SA-07 Headfirst","SA-08 Ram","SA-12 Servo Assisted","SA-25 Steel Trooper","SA-32 Dynamo","SC-30 Trailblazer Scout","SC-34 Infiltrator","SR-18 Roadblock","SR-24 Street Scout","UF-16 Inspector","UF-50 Bloodhound"],
   offensive: ["Orbital Gatling Barrage","Orbital Airburst Strike","Orbital 120MM HE Barrage","Orbital 380MM HE Barrage","Orbital Walking Barrage","Orbital Laser","Orbital Railcannon Strike","Orbital Precision Strike","Orbital Gas Strike","Orbital EMS Strike","Orbital Smoke Strike","Orbital Napalm Barrage","Eagle 500kg Bomb","Eagle Airstrike","Eagle Cluster Bomb","Eagle Napalm Airstrike","Eagle Strafing Run","Eagle 110mm Rocket Pods","Eagle Smoke Strike"],
   defensive: ["A/ARC-3 Tesla Tower","A/MG-43 Machine Gun Sentry","A/M-12 Mortar Sentry","A/M-23 EMS Mortar Sentry","A/AC-8 Autocannon Sentry","A/MLS-4X Rocket Sentry","A/G-16 Gatling Sentry","A/FLAM-40 Flame Sentry","A/GM-17 Gas Mortar Sentry","A/LAS-98 Laser Sentry","MD-6 Anti-Personnel Minefield","MD-I4 Incendiary Mines","MD-17 Anti-Tank Mines","MD-8 Gas Mines","E/AT-12 Anti-Tank Emplacement","E/MG-101 HMG Emplacement","E/GL-21 Grenadier Battlement","FX-12 Shield Generator Relay"],
@@ -921,6 +922,9 @@ window.joinRoom = async function() {
   // Watch presence count — when it hits 0, delete the room
   const presenceRef = ref(db, 'rooms/' + code + '/presence');
   const unsubPresence = onValue(presenceRef, snapshot => {
+    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+    const countEl = document.getElementById('player-count');
+    if (countEl) countEl.textContent = currentRoom ? `👤 ${count} player${count !== 1 ? 's' : ''} in room` : '';
     if (!snapshot.exists() && currentRoom === code) {
       remove(ref(db, 'rooms/' + code));
     }
@@ -1009,6 +1013,8 @@ window.leaveRoom = function() {
   currentRoom = null;
   window.history.replaceState({}, '', window.location.pathname);
   document.getElementById('room-display').textContent = '';
+  const countEl = document.getElementById('player-count');
+  if (countEl) countEl.textContent = '';
   const btn = document.getElementById('sync-btn');
   btn.textContent = 'Join Room';
   btn.classList.remove('active');
@@ -1049,6 +1055,10 @@ window.syncWarbonds = function(podId) {
   touchActivity();
   set(ref(db, 'rooms/' + currentRoom + '/warbonds/' + podId), podStates[podId].warbonds);
 };
+
+// Wire up sync bar events after module loads
+document.getElementById('sync-btn').addEventListener('click', () => window.joinRoom());
+document.getElementById('room-input').addEventListener('keydown', e => { if (e.key === 'Enter') window.joinRoom(); });
 </script>
 
 <div class="footer" style="text-align:center;padding:1.5rem 2rem;color:var(--text2);font-size:0.75rem;letter-spacing:0.1em;border-top:1px solid var(--border);margin-top:2rem;">
