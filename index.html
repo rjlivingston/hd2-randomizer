@@ -16,7 +16,8 @@
     --success: #3a9060; --tab-active: #2e4870;
     --hp1: #e06030; --hp2: #3a88d8; --hp3: #50a858; --hp4: #a858d8;
   }
-  body { background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 16px; min-height: 100vh; }
+  html { font-size: 1.125em; }
+  body { background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; min-height: 100vh; }
   .header { text-align: center; padding: 2rem 1rem 1rem; border-bottom: 1px solid var(--border); }
   .header h1 { font-size: 2rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold2); text-shadow: 0 0 20px rgba(232,224,48,0.4); }
   .header .subtitle { font-size: 0.85rem; letter-spacing: 0.3em; color: var(--text2); text-transform: uppercase; margin-top: 0.25rem; }
@@ -119,6 +120,7 @@
   .sync-dot.connected { background: var(--success); }
   .sync-dot.syncing { background: var(--gold); }
   .sync-label { color: var(--text2); letter-spacing: 0.05em; }
+  #guaranteed-list label { font-size: 0.75em; }
   .footer { text-align:center; padding: 1.5rem 2rem; color: var(--text2); font-size: 0.75rem; letter-spacing: 0.1em; border-top: 1px solid var(--border); margin-top: 2rem; }
   .room-input { background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 0.72rem; padding: 0.25rem 0.5rem; width: 160px; letter-spacing: 0.05em; }
   .room-input:focus { outline: none; border-color: var(--accent); }
@@ -139,12 +141,35 @@
       <div class="sync-dot" id="sync-dot"></div>
       <span class="sync-label" id="sync-label">Not connected</span>
     </div>
-    <input class="room-input" id="room-input" placeholder="Enter room code..." autocomplete="off" />
+    <input class="room-input" id="callsign-input" placeholder="Callsign..." autocomplete="off" style="width:100px;" />
+    <input class="room-input" id="room-input" placeholder="Room code..." autocomplete="off" />
     <button class="sync-btn" id="sync-btn">Join Room</button>
     <span class="room-code-display" id="room-display"></span>
     <span id="player-count" style="font-size:0.7rem;color:var(--text2);letter-spacing:0.05em;margin-left:auto;"></span>
   </div>
   <div class="catchphrase-banner" id="catchphrase-banner"></div>
+  <div style="display:flex;align-items:center;gap:1rem;padding:0.5rem 0;margin-bottom:0.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+    <span style="font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text2);">Trait Filters:</span>
+    <label class="toggle-item"><input type="checkbox" onchange="toggleTraitFilter('Expendable',this)"> Expendable</label>
+    <label class="toggle-item"><input type="checkbox" onchange="toggleTraitFilter('Incendiary',this)"> Incendiary</label>
+    <label class="toggle-item"><input type="checkbox" onchange="toggleTraitFilter('Explosive',this)"> Explosive</label>
+    <label class="toggle-item"><input type="checkbox" onchange="toggleTraitFilter('Caustic',this)"> Caustic</label>
+  </div>
+  <div style="margin-bottom:0.75rem;border-bottom:1px solid var(--border);padding-bottom:0.5rem;">
+    <div style="display:flex;align-items:center;gap:0.75rem;cursor:pointer;padding:0.3rem 0;" onclick="toggleGuaranteedPanel()">
+      <span style="font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text2);">Guaranteed Stratagems</span>
+      <span id="guaranteed-count" style="font-size:0.6rem;color:var(--gold);"></span>
+      <span id="guaranteed-arrow" style="font-size:0.6rem;color:var(--text2);margin-left:auto;">&#9658;</span>
+    </div>
+    <div id="guaranteed-panel" style="display:none;margin-top:0.4rem;">
+      <div style="display:flex;gap:0.3rem;margin-bottom:0.4rem;">
+        <button class="select-all-btn" id="gtab-Offensive" onclick="setGuaranteedTab('Offensive')" style="opacity:1;border-color:var(--gold);color:var(--gold);">Offensive</button>
+        <button class="select-all-btn" id="gtab-Support" onclick="setGuaranteedTab('Support')">Support</button>
+        <button class="select-all-btn" id="gtab-Defensive" onclick="setGuaranteedTab('Defensive')">Defensive</button>
+      </div>
+      <div id="guaranteed-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.2rem;max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;"></div>
+    </div>
+  </div>
   <div class="party-grid" id="party-grid"></div>
   <div class="party-controls">
     <button class="big-randomize-btn" onclick="randomizeAll()">&#9654; Randomize All Hellpods</button>
@@ -289,6 +314,56 @@ const CATCHPHRASES = [
   "Liberty for ALL!"
 ];
 
+// Wiki-verified trait map for stratagems (Expendable, Incendiary, Explosive, Caustic)
+const ITEM_TRAITS = {
+  "EAT-17 Expendable Anti-Tank": ["Expendable"],
+  "EAT-411 Leveller": ["Expendable"],
+  "EAT-700 Expendable Napalm": ["Incendiary","Expendable"],
+  "FLAM-40 Flamethrower": ["Incendiary"],
+  "GL-21 Grenade Launcher": ["Explosive"],
+  "GL-28 Belt-Fed Grenade Launcher": ["Explosive"],
+  "MLS-4X Commando": ["Expendable"],
+  "TX-41 Sterilizer": ["Caustic"],
+  "B/FLAM-80 Cremator": ["Incendiary"],
+  "B/MD C4 Pack": ["Explosive"],
+  "AX/FLAM-75 Hot Dog": ["Incendiary"],
+  "AX/TX-13 Dog Breath": ["Caustic"],
+  "B-100 Portable Hellbomb": ["Explosive"],
+  "Orbital Gatling Barrage": ["Explosive"],
+  "Orbital Airburst Strike": ["Explosive"],
+  "Orbital 120MM HE Barrage": ["Explosive"],
+  "Orbital 380MM HE Barrage": ["Explosive"],
+  "Orbital Walking Barrage": ["Explosive"],
+  "Orbital Precision Strike": ["Explosive"],
+  "Orbital Gas Strike": ["Explosive","Caustic"],
+  "Orbital Smoke Strike": ["Explosive"],
+  "Orbital Napalm Barrage": ["Explosive","Incendiary"],
+  "Eagle 500kg Bomb": ["Explosive"],
+  "Eagle Airstrike": ["Explosive"],
+  "Eagle Cluster Bomb": ["Explosive"],
+  "Eagle Napalm Airstrike": ["Explosive","Incendiary"],
+  "Eagle 110mm Rocket Pods": ["Explosive"],
+  "Eagle Smoke Strike": ["Explosive"],
+  "A/M-12 Mortar Sentry": ["Explosive"],
+  "A/FLAM-40 Flame Sentry": ["Incendiary"],
+  "A/GM-17 Gas Mortar Sentry": ["Explosive"],
+  "MD-I4 Incendiary Mines": ["Explosive","Incendiary"],
+  "MD-8 Gas Mines": ["Explosive","Caustic"],
+  "E/GL-21 Grenadier Battlement": ["Explosive"]
+};
+
+// Active trait filters — all enabled by default
+// Active trait filters — unchecked by default (no filtering active)
+const traitFilters = { Expendable: false, Incendiary: false, Explosive: false, Caustic: false };
+
+function isItemAllowedByTraits(name) {
+  const anyActive = Object.values(traitFilters).some(v => v);
+  if (!anyActive) return true; // no filters active = include everything
+  const traits = ITEM_TRAITS[name] || [];
+  // Only include items that have at least one of the active (checked) traits
+  return Object.entries(traitFilters).some(([trait, active]) => active && traits.includes(trait));
+}
+
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 let catchphraseTimer = null;
@@ -425,7 +500,7 @@ function buildPod(podId) {
         <div class="vehicle-toggles" style="margin-top:0.4rem;">
           <div class="vehicle-toggle-label">Stratagem Options</div>
           <div class="vehicle-sub-toggles">
-            <label class="toggle-item"><input type="checkbox" id="atleastone-${podId}" onchange="toggleAtLeastOne(${podId},this)"> At Least One per pool</label>
+            <label class="toggle-item"><input type="checkbox" id="atleastone-${podId}" onchange="toggleAtLeastOne(${podId},this)"> At Least One per category</label>
           </div>
         </div>
       </div>
@@ -481,6 +556,59 @@ function toggleVehicle(podId, subType, cb) {
   podStates[podId].vehicles[subType] = cb.checked;
   VEHICLE_ITEMS[subType].forEach(itemName => lockItemByName(podId, itemName, !cb.checked));
   updateTabCounts(podId);
+}
+
+function toggleTraitFilter(trait, cb) {
+  traitFilters[trait] = cb.checked;
+}
+
+// Guaranteed stratagems organized by category
+const GUARANTEED_CATEGORIES = {
+  Offensive: [...DATA.offensive].sort(),
+  Support:   [...DATA.support].sort(),
+  Defensive: [...DATA.defensive].sort()
+};
+
+let currentGuaranteedTab = 'Offensive';
+const guaranteedStratagems = new Set();
+
+function buildGuaranteedList() {
+  const list = document.getElementById('guaranteed-list');
+  const items = GUARANTEED_CATEGORIES[currentGuaranteedTab] || [];
+  list.innerHTML = items.map(name =>
+    `<label class="toggle-item">
+      <input type="checkbox" ${guaranteedStratagems.has(name) ? 'checked' : ''} onchange="toggleGuaranteed('${name.replace(/'/g,"\\'")}',this)"> ${name}
+    </label>`
+  ).join('');
+}
+
+function setGuaranteedTab(tab) {
+  currentGuaranteedTab = tab;
+  ['Offensive','Support','Defensive'].forEach(t => {
+    const btn = document.getElementById('gtab-' + t);
+    if (btn) {
+      btn.style.opacity = t === tab ? '1' : '';
+      btn.style.borderColor = t === tab ? 'var(--gold)' : '';
+      btn.style.color = t === tab ? 'var(--gold)' : '';
+    }
+  });
+  buildGuaranteedList();
+}
+
+function toggleGuaranteedPanel() {
+  const panel = document.getElementById('guaranteed-panel');
+  const arrow = document.getElementById('guaranteed-arrow');
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.innerHTML = open ? '&#9660;' : '&#9658;';
+  if (open) buildGuaranteedList();
+}
+
+function toggleGuaranteed(name, cb) {
+  if (cb.checked) guaranteedStratagems.add(name);
+  else guaranteedStratagems.delete(name);
+  const count = guaranteedStratagems.size;
+  document.getElementById('guaranteed-count').textContent = count ? `(${count} selected)` : '';
 }
 
 function toggleAllLoadout(podId, btn) {
@@ -602,7 +730,7 @@ function searchWeapons(podId, query) {
   });
 }
 
-function generateLoadout(podId) {
+function generateLoadout(podId, guaranteed = []) {
   const state = podStates[podId];
   const l = state.loadout;
   const w = state.weapons;
@@ -624,11 +752,11 @@ function generateLoadout(podId) {
   SUPERSTORE.armor.forEach((item, i) => { if (ss.armor[i]) enabledArmor.add(item); });
   SUPERSTORE.bonus.forEach((item, i) => { if (ss.bonus[i]) enabledArmor.add(item); });
   const armorPool = [...enabledArmor];
-  const vehiclePool = DATA.vehicle.filter((_, i) => w.vehicle[i] !== false);
-  const offensivePool = DATA.offensive.filter((_, i) => w.offensive[i] !== false);
-  const defensivePool = DATA.defensive.filter((_, i) => w.defensive[i] !== false);
-  const supportPool   = DATA.support.filter((_, i) => w.support[i] !== false);
-  const backpackPool  = DATA.backpack.filter((_, i) => w.backpack[i] !== false);
+  const vehiclePool = DATA.vehicle.filter((_, i) => w.vehicle[i] !== false).filter(isItemAllowedByTraits);
+  const offensivePool = DATA.offensive.filter((_, i) => w.offensive[i] !== false).filter(isItemAllowedByTraits);
+  const defensivePool = DATA.defensive.filter((_, i) => w.defensive[i] !== false).filter(isItemAllowedByTraits);
+  const supportPool   = DATA.support.filter((_, i) => w.support[i] !== false).filter(isItemAllowedByTraits);
+  const backpackPool  = DATA.backpack.filter((_, i) => w.backpack[i] !== false).filter(isItemAllowedByTraits);
   const boosterPool   = DATA.booster.filter((_, i) => w.booster[i] !== false);
 
   const result = {};
@@ -637,52 +765,53 @@ function generateLoadout(podId) {
   if (l['Throwable'] && throwablePool.length)  result.throwable = rand(throwablePool);
   if (l['Armor']     && armorPool.length)      result.armor     = rand(armorPool);
 
-  // Build a combined pool from all enabled stratagem categories + vehicles, then pick 4 unique items
-  const strats = [];
+  // Start with guaranteed stratagems for this pod (pre-assigned by randomizeAll)
+  const strats = [...guaranteed];
+  const used = new Set(guaranteed);
+  let backpackUsed = guaranteed.some(s => STRAT_POOL_LABEL[s] === 'Backpack' || SUPPORT_WITH_BACKPACK.has(s));
 
   if (state.atLeastOne) {
-    // In atLeastOne mode, vehicles count as support — merge them in
     const supportPlusVehicles = [...supportPool, ...vehiclePool];
     const guaranteedPools = [offensivePool, defensivePool, supportPlusVehicles, backpackPool].filter(p => p.length);
-    const used = new Set();
     for (const pool of guaranteedPools) {
+      if (strats.length >= 4) break;
       const shuffled = [...pool].sort(() => Math.random() - 0.5);
       for (const item of shuffled) {
-        if (!used.has(item)) { used.add(item); strats.push(item); break; }
-      }
-    }
-    if (strats.length < 4) {
-      const combined = [...offensivePool, ...defensivePool, ...supportPlusVehicles, ...backpackPool]
-        .filter(item => !used.has(item))
-        .sort(() => Math.random() - 0.5);
-      const backpackUsed = strats.some(s => STRAT_POOL_LABEL[s] === 'Backpack' || SUPPORT_WITH_BACKPACK.has(s));
-      for (const item of combined) {
-        if (strats.length >= 4) break;
         if (used.has(item)) continue;
         const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
         const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
         if ((isBackpack || includesBackpack) && backpackUsed) continue;
+        if (isBackpack || includesBackpack) backpackUsed = true;
+        used.add(item); strats.push(item); break;
+      }
+    }
+    if (strats.length < 4) {
+      const combined = [...offensivePool, ...defensivePool, ...supportPlusVehicles, ...backpackPool]
+        .filter(item => !used.has(item)).sort(() => Math.random() - 0.5);
+      for (const item of combined) {
+        if (strats.length >= 4) break;
+        const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
+        const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
+        if ((isBackpack || includesBackpack) && backpackUsed) continue;
+        if (isBackpack || includesBackpack) backpackUsed = true;
         used.add(item); strats.push(item);
       }
     }
   } else {
-    // Normal mode: only use enabled pools, pick 4 randomly, max one backpack slot
     const stratPool = [];
     if (l['Offensive']) offensivePool.forEach(i => stratPool.push(i));
     if (l['Defensive']) defensivePool.forEach(i => stratPool.push(i));
     if (l['Support'])   supportPool.forEach(i => stratPool.push(i));
     if (l['Backpack'])  backpackPool.forEach(i => stratPool.push(i));
     vehiclePool.forEach(i => stratPool.push(i));
-    let backpackUsed = false;
-    const seen = new Set();
     for (const item of stratPool.sort(() => Math.random() - 0.5)) {
-      if (seen.has(item)) continue;
+      if (strats.length >= 4) break;
+      if (used.has(item)) continue;
       const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
       const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
       if ((isBackpack || includesBackpack) && backpackUsed) continue;
       if (isBackpack || includesBackpack) backpackUsed = true;
-      seen.add(item); strats.push(item);
-      if (strats.length === 4) break;
+      used.add(item); strats.push(item);
     }
   }
 
@@ -748,33 +877,39 @@ function rerollSection(podId, slot) {
     const pool = [...enabledArmor];
     if (pool.length) result.armor = rand(pool);
   } else if (slot === 'stratagems') {
-    const vehiclePool = DATA.vehicle.filter((_, i) => w.vehicle[i] !== false);
-    const offensivePool = DATA.offensive.filter((_, i) => w.offensive[i] !== false);
-    const defensivePool = DATA.defensive.filter((_, i) => w.defensive[i] !== false);
-    const supportPool   = DATA.support.filter((_, i) => w.support[i] !== false);
-    const backpackPool  = DATA.backpack.filter((_, i) => w.backpack[i] !== false);
+    const vehiclePool = DATA.vehicle.filter((_, i) => w.vehicle[i] !== false).filter(isItemAllowedByTraits);
+    const offensivePool = DATA.offensive.filter((_, i) => w.offensive[i] !== false).filter(isItemAllowedByTraits);
+    const defensivePool = DATA.defensive.filter((_, i) => w.defensive[i] !== false).filter(isItemAllowedByTraits);
+    const supportPool   = DATA.support.filter((_, i) => w.support[i] !== false).filter(isItemAllowedByTraits);
+    const backpackPool  = DATA.backpack.filter((_, i) => w.backpack[i] !== false).filter(isItemAllowedByTraits);
     const l = state.loadout;
     const strats = [];
     if (state.atLeastOne) {
       const supportPlusVehicles = [...supportPool, ...vehiclePool];
       const guaranteedPools = [offensivePool, defensivePool, supportPlusVehicles, backpackPool].filter(p => p.length);
       const used = new Set();
+      let backpackUsed = false;
       for (const pool of guaranteedPools) {
         const shuffled = [...pool].sort(() => Math.random() - 0.5);
         for (const item of shuffled) {
-          if (!used.has(item)) { used.add(item); strats.push(item); break; }
+          if (used.has(item)) continue;
+          const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
+          const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
+          if ((isBackpack || includesBackpack) && backpackUsed) continue;
+          if (isBackpack || includesBackpack) backpackUsed = true;
+          used.add(item); strats.push(item); break;
         }
       }
       if (strats.length < 4) {
         const combined = [...offensivePool, ...defensivePool, ...supportPlusVehicles, ...backpackPool]
           .filter(item => !used.has(item)).sort(() => Math.random() - 0.5);
-        const backpackUsed = strats.some(s => STRAT_POOL_LABEL[s] === 'Backpack' || SUPPORT_WITH_BACKPACK.has(s));
         for (const item of combined) {
           if (strats.length >= 4) break;
           if (used.has(item)) continue;
           const isBackpack = STRAT_POOL_LABEL[item] === 'Backpack';
           const includesBackpack = SUPPORT_WITH_BACKPACK.has(item);
           if ((isBackpack || includesBackpack) && backpackUsed) continue;
+          if (isBackpack || includesBackpack) backpackUsed = true;
           used.add(item); strats.push(item);
         }
       }
@@ -826,9 +961,20 @@ function randomizePod(podId) {
 function randomizeAll() {
   flashCatchphrase();
   const results = {};
+  const activePods = [1,2,3,4].filter(i => !podStates[i].disabled);
+
+  // Pre-assign guaranteed stratagems randomly across active pods
+  // Each guaranteed item goes to one randomly chosen active pod
+  const podGuaranteed = {};
+  activePods.forEach(i => podGuaranteed[i] = []);
+  guaranteedStratagems.forEach(item => {
+    const pod = activePods[Math.floor(Math.random() * activePods.length)];
+    podGuaranteed[pod].push(item);
+  });
+
   for (let i = 1; i <= 4; i++) {
     if (!podStates[i].disabled) {
-      results[i] = generateLoadout(i);
+      results[i] = generateLoadout(i, podGuaranteed[i] || []);
       renderResult(i, results[i]);
     } else {
       results[i] = null;
@@ -836,7 +982,6 @@ function randomizeAll() {
   }
   if (window.syncAllResults) window.syncAllResults(results);
 }
-
 // Build grid
 const grid = document.getElementById('party-grid');
 for (let i = 1; i <= 4; i++) {
@@ -892,8 +1037,12 @@ function touchActivity() {
 
 window.joinRoom = async function() {
   const input = document.getElementById('room-input');
+  const callsignInput = document.getElementById('callsign-input');
   const code = input.value.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '');
+  const callsign = callsignInput.value.trim() || 'Helldiver';
   if (!code) { input.focus(); return; }
+  // Save callsign for next time
+  localStorage.setItem('hd2_callsign', callsign);
 
   if (roomRef) roomRef();
 
@@ -912,9 +1061,9 @@ window.joinRoom = async function() {
     }
   }
 
-  // Register this client's presence
+  // Register this client's presence with callsign
   myPresenceRef = push(ref(db, 'rooms/' + code + '/presence'));
-  await set(myPresenceRef, { joined: Date.now() });
+  await set(myPresenceRef, { joined: Date.now(), callsign });
 
   // When this client disconnects, remove their presence entry
   onDisconnect(myPresenceRef).remove();
@@ -922,12 +1071,15 @@ window.joinRoom = async function() {
   // Watch presence count — when it hits 0, delete the room
   const presenceRef = ref(db, 'rooms/' + code + '/presence');
   const unsubPresence = onValue(presenceRef, snapshot => {
-    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
     const countEl = document.getElementById('player-count');
-    if (countEl) countEl.textContent = currentRoom ? `👤 ${count} player${count !== 1 ? 's' : ''} in room` : '';
-    if (!snapshot.exists() && currentRoom === code) {
-      remove(ref(db, 'rooms/' + code));
+    if (!snapshot.exists()) {
+      if (countEl) countEl.textContent = '';
+      if (currentRoom === code) remove(ref(db, 'rooms/' + code));
+      return;
     }
+    const entries = Object.values(snapshot.val());
+    const names = entries.map(e => e.callsign || 'Helldiver').join(', ');
+    if (countEl) countEl.textContent = `👤 ${entries.length} in room: ${names}`;
   });
 
   // Touch activity timestamp on join
@@ -1059,6 +1211,11 @@ window.syncWarbonds = function(podId) {
 // Wire up sync bar events after module loads
 document.getElementById('sync-btn').addEventListener('click', () => window.joinRoom());
 document.getElementById('room-input').addEventListener('keydown', e => { if (e.key === 'Enter') window.joinRoom(); });
+document.getElementById('callsign-input').addEventListener('keydown', e => { if (e.key === 'Enter') window.joinRoom(); });
+
+// Restore saved callsign
+const savedCallsign = localStorage.getItem('hd2_callsign');
+if (savedCallsign) document.getElementById('callsign-input').value = savedCallsign;
 </script>
 
 <div class="footer" style="text-align:center;padding:1.5rem 2rem;color:var(--text2);font-size:0.75rem;letter-spacing:0.1em;border-top:1px solid var(--border);margin-top:2rem;">
