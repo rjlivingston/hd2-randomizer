@@ -1213,12 +1213,12 @@ function toggleLock(podId, slot, btn) {
     lockedSlots[podId].delete(slot);
     btn.classList.remove('locked');
     btn.title = 'Lock';
-    btn.textContent = '🔓';
+    btn.innerHTML = '<i class="bi bi-unlock"></i>';
   } else {
     lockedSlots[podId].add(slot);
     btn.classList.add('locked');
     btn.title = 'Unlock';
-    btn.textContent = '🔒';
+    btn.innerHTML = '<i class="bi bi-lock-fill"></i>';
   }
 }
 
@@ -1234,7 +1234,7 @@ function renderResult(podId, result) {
   const locked = lockedSlots[podId];
   const rb = (slot) => {
     const isLocked = locked.has(slot);
-    return `<button class="reroll-btn${isLocked ? ' disabled' : ''}" onclick="if(!lockedSlots[${podId}].has('${slot}')) rerollSection(${podId},'${slot}')" title="${isLocked ? 'Unlock to re-roll' : 'Re-roll'}" style="opacity:${isLocked ? '0.4' : '1'}">↻</button><button class="lock-btn${isLocked ? ' locked' : ''}" onclick="toggleLock(${podId},'${slot}',this)" title="${isLocked ? 'Unlock' : 'Lock'}">${isLocked ? '🔒' : '🔓'}</button>`;
+    return `<button class="reroll-btn${isLocked ? ' disabled' : ''}" onclick="if(!lockedSlots[${podId}].has('${slot}')) rerollSection(${podId},'${slot}')" title="${isLocked ? 'Unlock to re-roll' : 'Re-roll'}" style="opacity:${isLocked ? '0.4' : '1'}">↻</button><button class="lock-btn${isLocked ? ' locked' : ''}" onclick="toggleLock(${podId},'${slot}',this)" title="${isLocked ? 'Unlock' : 'Lock'}"><i class="bi ${isLocked ? 'bi-lock-fill' : 'bi-unlock'}"></i></button>`;
   };
 
   let html = '';
