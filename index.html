@@ -1629,6 +1629,8 @@ window.joinRoom = async function() {
 
   const claimsRef = ref(db, 'rooms/' + code + '/claims');
   const unsubClaims = onValue(claimsRef, snapshot => {
+    // If a local state restore is pending, don't let Firebase overwrite claims
+    if (window._pendingRestore) return;
     const data = snapshot.val() || {};
     for (let i = 1; i <= 4; i++) {
       currentClaims[i] = data[i] || '';
@@ -1834,6 +1836,8 @@ function restoreLocalState() {
         }
       }
     }
+    // Clear the restore flag so Firebase listeners resume normal operation
+    window._pendingRestore = null;
 
     // Restore preset dropdown selections
     if (snapshot.presetSelections) {
@@ -1890,8 +1894,12 @@ document.addEventListener('visibilitychange', async () => {
       const code = currentRoom;
       currentRoom = null;
       document.getElementById('room-input').value = code;
+      window._pendingRestore = localStorage.getItem('hd2_state_' + code);
       await window.joinRoom();
-      restoreLocalState();
+      // Give Firebase listeners 1.5s to settle, then restore and re-sync
+      setTimeout(() => {
+        restoreLocalState();
+      }, 1500);
     }
   }
 });
