@@ -81,6 +81,8 @@
   .weapon-item input[type="checkbox"] { accent-color: var(--gold); width: 11px; height: 11px; flex-shrink: 0; }
   .weapon-item.warbond-locked { opacity: 0.3; cursor: not-allowed; }
   .weapon-item.warbond-locked input { pointer-events: none; }
+  .toggle-item.warbond-locked { opacity: 0.3; cursor: not-allowed; }
+  .toggle-item.warbond-locked input { pointer-events: none; }
   .select-all-btn { font-family: 'Rajdhani', sans-serif; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; border: 1px solid var(--border); color: var(--text2); padding: 0.15rem 0.4rem; cursor: pointer; }
   .select-all-btn:hover { border-color: var(--gold); color: var(--gold); }
 
@@ -832,6 +834,7 @@ function loadPreset(name, podId) {
   updateTabCounts(podId);
   if (window.syncWarbonds) window.syncWarbonds(podId);
   claimPod(podId);
+  if (document.getElementById("guaranteed-panel")?.style.display !== "none") buildGuaranteedList();
 }
 
 function deletePreset(name, podId) {
@@ -855,14 +858,43 @@ const GUARANTEED_CATEGORIES = {
 let currentGuaranteedTab = 'Offensive';
 const guaranteedStratagems = new Set();
 
+// Build reverse lookup: stratagem name -> warbond ID
+const STRAT_TO_WARBOND = {};
+Object.entries(WARBOND_ITEMS).forEach(([wbId, items]) => {
+  items.forEach(item => { STRAT_TO_WARBOND[item] = wbId; });
+});
+
+// Check if a stratagem is available in at least one active hellpod's warbonds
+function isStratAvailable(name) {
+  const wbId = STRAT_TO_WARBOND[name];
+  if (!wbId) return true; // base game item, always available
+  // Available if any active (non-disabled) hellpod has this warbond selected
+  for (let i = 1; i <= 4; i++) {
+    if (!podStates[i].disabled && podStates[i].warbonds[wbId]) return true;
+  }
+  return false;
+}
+
 function buildGuaranteedList() {
   const list = document.getElementById('guaranteed-list');
   const items = GUARANTEED_CATEGORIES[currentGuaranteedTab] || [];
-  list.innerHTML = items.map(name =>
-    `<label class="toggle-item">
-      <input type="checkbox" ${guaranteedStratagems.has(name) ? 'checked' : ''} onchange="toggleGuaranteed('${name.replace(/'/g,"\\'")}',this)"> ${name}
-    </label>`
-  ).join('');
+  // Remove any selected stratagems that are no longer available
+  guaranteedStratagems.forEach(name => {
+    if (!isStratAvailable(name)) {
+      guaranteedStratagems.delete(name);
+    }
+  });
+  const count = guaranteedStratagems.size;
+  const countEl = document.getElementById('guaranteed-count');
+  if (countEl) countEl.textContent = count ? `(${count} selected)` : '';
+
+  list.innerHTML = items.map(name => {
+    const available = isStratAvailable(name);
+    const isChecked = guaranteedStratagems.has(name);
+    return `<label class="toggle-item${available ? '' : ' warbond-locked'}">
+      <input type="checkbox" ${isChecked ? 'checked' : ''} ${available ? '' : 'disabled'} onchange="toggleGuaranteed('${name.replace(/'/g,"\\'")}',this)"> ${name}
+    </label>`;
+  }).join('');
 }
 
 function setGuaranteedTab(tab) {
@@ -934,6 +966,7 @@ function selectAllWarbonds(podId) {
   });
   updateTabCounts(podId);
   if (window.syncWarbonds) window.syncWarbonds(podId);
+  if (document.getElementById("guaranteed-panel")?.style.display !== "none") buildGuaranteedList();
 }
 
 function deassignPod(podId) {
@@ -1013,6 +1046,7 @@ function toggleWarbond(podId, wbId, btn) {
   updateTabCounts(podId);
   if (window.syncWarbonds) window.syncWarbonds(podId);
   claimPod(podId);
+  if (document.getElementById("guaranteed-panel")?.style.display !== "none") buildGuaranteedList();
 }
 
 function toggleAllWarbonds(podId, btn) {
@@ -1699,6 +1733,12 @@ if (savedCallsign) document.getElementById('callsign-input').value = savedCallsi
 // Save all local pod state to localStorage so it survives mobile screen sleep
 function saveLocalState() {
   if (!currentRoom) return;
+  // Save preset dropdown selections per pod
+  const presetSelections = {};
+  for (let i = 1; i <= 4; i++) {
+    const sel = document.getElementById('preset-select-' + i);
+    if (sel) presetSelections[i] = sel.value || '';
+  }
   const snapshot = {
     savedAt: Date.now(),
     podStates: JSON.parse(JSON.stringify(podStates)),
@@ -1709,7 +1749,8 @@ function saveLocalState() {
     },
     currentClaims,
     traitFilters,
-    guaranteedStratagems: [...guaranteedStratagems]
+    guaranteedStratagems: [...guaranteedStratagems],
+    presetSelections
   };
   localStorage.setItem('hd2_state_' + currentRoom, JSON.stringify(snapshot));
 }
@@ -1784,6 +1825,25 @@ function restoreLocalState() {
       const countEl = document.getElementById('guaranteed-count');
       if (countEl) countEl.textContent = count ? `(${count} selected)` : '';
     }
+
+    // Re-sync claims back to Firebase so everyone sees the user in their hellpod
+    if (snapshot.currentClaims) {
+      for (let i = 1; i <= 4; i++) {
+        if (snapshot.currentClaims[i]) {
+          if (window.syncClaim) window.syncClaim(i, false, snapshot.currentClaims[i]);
+        }
+      }
+    }
+
+    // Restore preset dropdown selections
+    if (snapshot.presetSelections) {
+      for (let i = 1; i <= 4; i++) {
+        const sel = document.getElementById('preset-select-' + i);
+        if (sel && snapshot.presetSelections[i]) {
+          sel.value = snapshot.presetSelections[i];
+        }
+      }
+    }
   } catch(e) {
     console.warn('Failed to restore local state:', e);
   }
@@ -1821,6 +1881,10 @@ document.addEventListener('visibilitychange', async () => {
       await set(myPresenceRef, { joined: Date.now(), callsign });
       onDisconnect(myPresenceRef).remove();
       touchActivity();
+      // Re-sync claims in case onDisconnect partially fired
+      for (let i = 1; i <= 4; i++) {
+        if (currentClaims[i] && window.syncClaim) window.syncClaim(i, false, currentClaims[i]);
+      }
     } catch {
       // Connection dropped fully — do a full rejoin and restore state
       const code = currentRoom;
